@@ -1,0 +1,1084 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JAL Summer 2026 — Plan Familial</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{color-scheme:light;--bg:#F7F8FB;--card:#FFFFFF;--ink:#1B2433;--ink-2:#5A6577;--ink-3:#8E97A6;--line:#E5E9F0;--accent:#3D5A80;--shadow:0 1px 2px rgba(20,30,50,.04),0 4px 16px rgba(20,30,50,.04);--radius:14px}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--ink);margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',Roboto,sans-serif;font-size:14px;line-height:1.45}
+.wrap{max-width:1320px;margin:0 auto;padding:24px 22px 80px}
+.head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.head h1{font-size:26px;margin:0;letter-spacing:-.5px;font-weight:600}
+.head .sub{color:var(--ink-2);font-size:13px;margin-top:4px}
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;background:#E8EEF5;color:#3D5A80;font-size:11px;font-weight:500;margin-left:6px;vertical-align:middle}
+.head .meta{font-size:11px;color:var(--ink-3)}
+.head-actions{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.upload-btn{background:#1B2433;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .15s}
+.upload-btn:hover{background:#2A3548}
+.upload-btn .icon{font-size:14px}
+.data-status{font-size:10.5px;color:var(--ink-3);font-style:italic}
+.data-status.fresh{color:#1F5C3D;font-style:normal;font-weight:500}
+.reset-link{font-size:10px;color:var(--ink-3);text-decoration:underline;cursor:pointer;background:none;border:none;padding:0}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1B2433;color:white;padding:12px 20px;border-radius:8px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:200;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.show{opacity:1}
+.toast.error{background:#A04020}
+.edit-btn{background:#FFFFFF;color:#1B2433;border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.edit-btn:hover{background:#F7F9FC;border-color:#C5CCD9}
+.edit-btn.active{background:#1F5C3D;color:white;border-color:#1F5C3D}
+.edit-btn.active:hover{background:#2A7A4F}
+.export-btn{background:transparent;color:var(--ink-2);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.export-btn:hover{background:#F7F9FC;color:var(--ink)}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+body.edit-mode .cell[data-key]{outline:1px dashed rgba(31,92,61,.4);outline-offset:-2px;cursor:text}
+body.edit-mode .cell[data-key]:hover{outline:2px solid #1F5C3D;outline-offset:-2px;background:#F0F8F4!important}
+body.edit-mode .cell[data-key]:focus{outline:2px solid #1F5C3D;outline-offset:-2px;background:#FFFFFF!important;color:#1B2433!important}
+body.edit-mode .cell[data-key] .cell-label{display:block;padding:0;background:transparent}
+body.edit-mode .cell[data-key] .note-icon{display:none}
+.edit-banner{background:#E0F2EA;border:1px solid #1F5C3D33;color:#1F5C3D;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12.5px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.edit-banner .keyboard-hint{font-size:11px;color:#1F5C3D99;font-style:italic}
+.save-btn{background:#1F5C3D;color:white;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .15s}
+.save-btn:hover{background:#164a30}
+.save-status{font-size:11px;color:#1F5C3D99;display:inline-flex;align-items:center;gap:4px}
+body.edit-mode .cell{position:relative;min-height:26px;cursor:text}
+body.edit-mode .cell-label{min-width:60px;min-height:18px;display:inline-block!important;padding:2px 22px 2px 8px!important;border-radius:4px}
+body.edit-mode .cell.empty-cell{background:repeating-linear-gradient(45deg,#FAFAFA,#FAFAFA 5px,#EEEEEE 5px,#EEEEEE 10px)!important}
+body.edit-mode .cell.empty-cell:hover{background:#FFFFFF!important;outline:2px solid #1F5C3D!important}
+.empty-placeholder{color:#1F5C3D;font-style:italic;font-weight:500;font-size:11px;opacity:.7}
+body.edit-mode .cell.empty-cell:hover .empty-placeholder{opacity:1}
+.note-btn{position:absolute;top:2px;right:2px;background:rgba(255,255,255,.85);border:1px solid rgba(160,64,32,.25);border-radius:4px;padding:0 4px;font-size:10px;cursor:pointer;display:none;line-height:1.3;color:#A04020;font-weight:500;z-index:2}
+.note-btn:hover{background:#FFFFFF;border-color:#A04020;color:#A04020}
+.note-btn.has-note{background:#FFF1E5;border-color:#A04020}
+body.edit-mode .note-btn{display:inline-block}
+body.edit-mode .cell-label{display:inline-block;padding-right:18px}
+.modal-textarea{width:100%;min-height:240px;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:'SF Mono',Menlo,monospace;font-size:12px;line-height:1.5;resize:vertical;color:var(--ink);background:#FAFBFC;box-sizing:border-box}
+.modal-textarea:focus{outline:none;border-color:#1F5C3D;background:#FFFFFF}
+.modal-actions{display:none;justify-content:space-between;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.modal-actions.show{display:flex}
+.modal-btn{padding:7px 14px;font-size:12px;font-weight:500;border-radius:6px;cursor:pointer;border:1px solid var(--line);background:white;color:var(--ink-2)}
+.modal-btn:hover{background:#F7F9FC}
+.modal-btn-save{background:#1F5C3D;color:white;border-color:#1F5C3D}
+.modal-btn-save:hover{background:#164a30}
+.modal-btn-delete{background:transparent;color:#A04020;border-color:#A04020}
+.modal-btn-delete:hover{background:#FCE3DA}
+.modal-help{font-size:11px;color:var(--ink-3);margin-top:8px;line-height:1.4}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
+.kpi .num{font-size:28px;font-weight:600;letter-spacing:-1px;color:var(--accent)}
+.kpi .lbl{color:var(--ink-2);font-size:11px;margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+.ptiles{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+.ptile{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:var(--radius);padding:16px 14px;box-shadow:var(--shadow);cursor:pointer;text-align:center;transition:all .15s ease;user-select:none}
+.ptile:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(20,30,50,.10)}
+.ptile.active{background:var(--accent);color:white;border-color:var(--accent)}
+.ptile.active .pt-name,.ptile.active .pt-sum{color:white}
+.ptile.active .pt-sum{opacity:.9}
+.ptile.active .pt-avatar{background:rgba(255,255,255,.2);color:white}
+.pt-avatar{width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.06);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;margin:0 auto 8px;letter-spacing:-.5px}
+.pt-name{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:2px}
+.pt-sum{font-size:11px;color:var(--ink-2);line-height:1.3}
+.pt-cta{font-size:10px;color:var(--ink-3);margin-top:6px;font-weight:500;letter-spacing:.3px;text-transform:uppercase}
+.ptile.active .pt-cta{color:rgba(255,255,255,.7)}
+.filter-banner{background:#FFF8E1;border:1px solid #F5DC8A;border-radius:8px;padding:8px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:12px}
+.filter-banner button{background:#1B2433;color:white;border:none;border-radius:999px;padding:4px 12px;font-size:11px;cursor:pointer;font-weight:500}
+.psched-wrap{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:0;margin-bottom:18px;overflow:hidden}
+.psched-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+.psched-table td{padding:6px 12px;border-bottom:1px solid var(--line)}
+.psched-table tr:last-child td{border-bottom:none}
+.psched-day{width:38px;color:var(--ink-3);font-size:11px}
+.psched-date{width:60px;color:var(--ink-2);font-weight:500}
+.psched-act{font-size:12px}
+.psched-month td{background:#1B2433!important;color:white;font-weight:600;padding:8px 14px!important;font-size:12px;letter-spacing:.5px;text-transform:uppercase}
+.psched-row.weekend td{background-color:#FCFAF4}
+.psched-row.weekend .psched-day,.psched-row.weekend .psched-date{color:var(--ink);font-weight:600}
+.psched-row.has-note{cursor:pointer}
+.psched-row.has-note:hover td{background-color:#FFF8F0!important}
+.psched-pill{display:inline-block;padding:3px 10px;border-radius:4px;font-weight:500;font-size:11px}
+.psched-note-icon{color:#A04020;font-size:9px;margin-left:4px}
+.section{margin:26px 0 12px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.section h2{font-size:16px;margin:0;font-weight:600}
+.section .hint{font-size:12px;color:var(--ink-3)}
+.highlights{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.hl-card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--radius);padding:14px 16px;display:flex;gap:12px;box-shadow:var(--shadow)}
+.hl-icon{font-size:22px;line-height:1}
+.hl-title{font-weight:600;font-size:14px}
+.hl-sub{font-size:12px;color:var(--ink-2);margin-top:2px}
+.hl-note{font-size:12px;color:var(--ink-3);margin-top:6px;line-height:1.4}
+.cal-wrap{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.cal-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+.cal-table th{background:#F7F9FC;padding:10px 8px;font-weight:600;color:var(--ink-2);text-align:left;border-bottom:1px solid var(--line);font-size:10.5px;text-transform:uppercase;letter-spacing:.5px}
+.cal-table td{padding:6px 7px;border-bottom:1px solid var(--line)}
+.dayname{width:38px;color:var(--ink-3);font-size:11px}
+.date{width:50px;color:var(--ink-2);font-weight:500}
+.day-row.weekend td{background-color:#FCFAF4}
+.day-row.weekend .dayname,.day-row.weekend .date{color:var(--ink);font-weight:600}
+.cell{font-size:11px;padding:6px 7px!important}
+.cell-label{display:inline-block;padding:2px 8px;border-radius:4px;font-weight:500;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.has-note{cursor:pointer}
+.has-note:hover{outline:2px solid #A04020;outline-offset:-2px}
+.note-icon{color:#A04020;font-size:9px;vertical-align:middle;margin-left:2px}
+.together{width:30px;text-align:center}
+.together-dot{color:#C19A0A;font-size:16px;line-height:1}
+.month-row td{background:#1B2433!important;color:white;font-weight:600;padding:8px 14px!important;font-size:12px;letter-spacing:.5px;text-transform:uppercase}
+.legend{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px}
+.leg-chip{display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:500}
+.tg-list{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:6px 0;box-shadow:var(--shadow)}
+.tg-row{display:grid;grid-template-columns:170px 50px 1fr;gap:10px;padding:8px 16px;align-items:center;border-bottom:1px solid var(--line);font-size:13px}
+.tg-row:last-child{border-bottom:none}
+.tg-dates{color:var(--ink-2);font-weight:500}
+.tg-count{background:#FFE8B3;color:#8A6B0E;padding:2px 8px;border-radius:999px;text-align:center;font-size:11px;font-weight:600}
+.tg-where{color:var(--ink);font-weight:500}
+.travel-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.travel-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);border-left:4px solid #A04020}
+.travel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.travel-date{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.travel-route{font-weight:600;font-size:13px;flex:1;min-width:140px}
+.travel-persons{display:flex;gap:4px;flex-wrap:wrap}
+.p-chip{color:white;font-size:10px;padding:2px 7px;border-radius:999px;font-weight:500}
+.travel-note{font-size:12px;color:var(--ink-2);background:#FAFBFC;border-radius:6px;padding:10px 12px;margin-top:6px;border:1px solid var(--line)}
+.note-line{display:flex;gap:6px;padding:1.5px 0}
+.note-key{color:var(--ink-3);font-weight:500;min-width:120px;flex-shrink:0;font-size:11px}
+.note-val{color:var(--ink);font-family:'SF Mono',Menlo,monospace;font-size:11.5px}
+.note-text{padding:2px 0;color:var(--ink)}
+.persons{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.person-card{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.person-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.person-name{font-weight:600;font-size:14px;color:var(--accent)}
+.bd-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;padding:5px 0;font-size:12px;align-items:baseline;border-bottom:1px dashed var(--line)}
+.bd-row:last-child{border-bottom:none}
+.bd-label{color:var(--ink);font-weight:500}
+.bd-dates{color:var(--ink-3);font-size:11px;white-space:nowrap}
+.bd-count{color:var(--ink);font-weight:600;min-width:24px;text-align:right}
+.vac-title{font-size:12px;color:var(--ink-2);margin-top:6px;line-height:1.4}
+.vac-title strong{font-size:20px;color:var(--accent);font-weight:700;margin:0 4px;letter-spacing:-.5px}
+.vac-title .vac-suffix{font-size:10.5px;color:var(--ink-3)}
+.footer{margin-top:32px;color:var(--ink-3);font-size:11px;text-align:center}
+#modal{position:fixed;inset:0;background:rgba(20,30,50,.45);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+#modal.open{display:flex}
+.modal-card{background:white;border-radius:var(--radius);max-width:560px;width:100%;max-height:80vh;overflow:auto;padding:20px 24px;box-shadow:0 12px 48px rgba(0,0,0,.25)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.modal-title{font-weight:600;font-size:15px}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-3);line-height:1}
+.modal-body{font-size:12.5px}
+@media(max-width:980px){.kpis{grid-template-columns:repeat(2,1fr)}.highlights{grid-template-columns:1fr}.persons{grid-template-columns:repeat(2,1fr)}.travel-list{grid-template-columns:1fr}.cal-table{font-size:10.5px}.cell-label{font-size:10px;padding:1px 5px}}
+@media(max-width:600px){.kpis{grid-template-columns:repeat(2,1fr)}.persons{grid-template-columns:1fr}.head h1{font-size:22px}.wrap{padding:16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="head">
+  <div>
+    <h1>Summer 2026 — Plan Familial<span class="badge">Famille Lecointre</span></h1>
+    <div class="sub">20 juin → 24 août 2026 · co-construit avec Carole, Anatole, Auguste, Sixtine</div>
+  </div>
+  <div class="head-actions">
+    <div class="btn-row">
+      <button class="edit-btn" id="editBtn" onclick="toggleEdit()"><span class="icon">✏️</span> <span id="editBtnLabel">Éditer</span></button>
+      <button class="export-btn" onclick="exportXlsx()"><span class="icon">💾</span> Enregistrer XLSX</button>
+      <button class="upload-btn" onclick="document.getElementById('xlsInput').click()"><span class="icon">📂</span> Importer XLS</button>
+      <input type="file" id="xlsInput" accept=".xlsx,.xls" style="display:none" onchange="handleXlsUpload(event)">
+    </div>
+    <div class="data-status" id="dataStatus">Source : Summer 2026.xlsx (par défaut)</div>
+    <div class="data-status" id="htmlLocLabel" style="font-style:normal"></div>
+    <div class="data-status" id="saveLocLabel" style="font-style:normal"></div>
+    <button class="reset-link" id="resetBtn" onclick="resetData()" style="display:none">Réinitialiser aux données par défaut</button>
+  </div>
+</header>
+<div id="toast" class="toast"></div>
+<div class="section"><h2>Famille</h2><span class="hint">cliquez sur une carte pour voir le programme de chacun</span></div>
+<div id="ptiles" class="ptiles"></div>
+<div id="filterBanner"></div>
+<div class="section"><h2 id="cal-section-title">Calendrier d&eacute;taill&eacute;</h2><span class="hint" id="cal-section-hint">cliquez sur les cellules avec &#9679; pour voir les d&eacute;tails de transport</span></div>
+<div id="editBanner" style="display:none"></div>
+<div class="cal-wrap"><table class="cal-table"><thead id="calhead"></thead><tbody id="calbody"></tbody></table></div>
+<div class="section"><h2>R&eacute;partition par personne</h2><span class="hint">nombre de jours par activit&eacute;</span></div>
+<div id="persons" class="persons"></div>
+<div class="footer">JAL Summer 2026 Dashboard &middot; g&eacute;n&eacute;r&eacute; &agrave; partir de <em>Summer 2026.xlsx</em></div>
+</div>
+<div id="modal" onclick="if(event.target.id===&#39;modal&#39;)closeModal()">
+  <div class="modal-card">
+    <div class="modal-head"><div class="modal-title" id="modalTitle"></div><button class="modal-close" onclick="closeModal()">&times;</button></div>
+    <div class="modal-body" id="modalBody"></div>
+    <textarea class="modal-textarea" id="modalEdit" style="display:none" placeholder="Saisis les d&eacute;tails du voyage&#10;Exemple :&#10;Dubai Nice on Emirates&#10;Flight: EK077&#10;Departure (DXB): ~08:40&#10;Arrival (NCE): ~13:30"></textarea>
+    <div class="modal-help" id="modalHelp" style="display:none">Une ligne avec <em>Flight:, Departure:, Arrival:, Train:, etc.</em> sera affich&eacute;e en cl&eacute;/valeur. Les autres lignes apparaissent comme texte simple. Une ligne vide = saut de ligne.</div>
+    <div class="modal-actions" id="modalActions">
+      <button class="modal-btn modal-btn-delete" onclick="deleteNote()">Supprimer la note</button>
+      <div style="flex:1"></div>
+      <button class="modal-btn" onclick="closeModal()">Annuler</button>
+      <button class="modal-btn modal-btn-save" onclick="saveNote()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+<script>
+const CAT={
+"Boulot Dubai":["#E8EEF5","#3D5A80","Dubai · Work"],
+"Ecole Dubai":["#E2EAF5","#3D5A80","Dubai · School"],
+"Dubai":["#E8EEF5","#3D5A80","Dubai"],
+"WeekEnd Dubai":["#F1F5FA","#5C7A9E","Dubai · WE"],
+"Stage ou Petit Boulot":["#DDE6F2","#3D5A80","Dubai · Stage"],
+"School Start":["#FFE8B3","#8A6B0E","Rentrée"],
+"Boulot Geneva":["#D7E5DA","#1F5C3D","Geneva · Work"],
+"Flight Dubai-Geneva":["#FCE3DA","#A04020","✈ DXB→GVA"],
+"Flight Dubai-Geneva-Dublin":["#FCE3DA","#A04020","✈ DXB→GVA→DUB"],
+"Flight Dubai-Malaga":["#FCE3DA","#A04020","✈ DXB→AGP"],
+"Flight Dubai-Nice":["#FCE3DA","#A04020","✈ DXB→NCE"],
+"Flight Dublin-Nice":["#FCE3DA","#A04020","✈ DUB→NCE"],
+"Flight Geneva-Dubai":["#FCE3DA","#A04020","✈ GVA→DXB"],
+"Flight Geneva-Dublin":["#FCE3DA","#A04020","✈ GVA→DUB"],
+"Flight Nice-Bordeaux ":["#FCE3DA","#A04020","✈ NCE→BOD"],
+"Flight Nice-Malaga":["#FCE3DA","#A04020","✈ NCE→AGP"],
+"Bayonne-Bordeaux-Malaga":["#F8D6BB","#8A4F1A","⇄ Bayonne→AGP"],
+"Cannes-Nice-Bordeaux-Royan":["#F8D6BB","#8A4F1A","⇄ Cannes→Royan"],
+"Royan-Bordeaux-Malaga":["#F8D6BB","#8A4F1A","⇄ Royan→AGP"],
+"Angouleme-Paris-Dubai":["#F8D6BB","#8A4F1A","⇄ Angoulême→DXB"],
+"Lacanau-Bayonne":["#F8D6BB","#8A4F1A","⇄ Lacanau→Bayonne"],
+"Gonfaron-Cannes":["#F8D6BB","#8A4F1A","⇄ Gonfaron→Cannes"],
+"Gonfaron":["#FFF1C7","#8A6B0E","Gonfaron"],
+"Gonfaron chez Papou Mamou":["#FFE99B","#8A6B0E","Gonfaron · P&M"],
+"Fleac":["#FCD8E7","#9C2A6B","Fléac"],
+"Colo Montagne":["#CFE7C9","#2F6B33","Colo Montagne"],
+"Chantier Jeune Sainte Marguerite":["#B8DEAF","#2F6B33","Chantier Ste Marguerite"],
+"Les Roches Summer Camp":["#9DCF92","#1F5C3D","Les Roches Camp"],
+"Megeve - Luce":["#D5E6F2","#284C7A","Megève · Luce"],
+"Lacanau chez Esteban":["#CFE3F0","#1E4D7A","Lacanau · Esteban"],
+"Bayonne chez Jeanne":["#C0D6E8","#1E4D7A","Bayonne · Jeanne"],
+"La Palmyre chez Paul":["#C9E6E1","#175E5A","La Palmyre · Paul"],
+"Dublin World Dance Cup Final":["#E0D2F2","#5C2E9C","Dublin · Dance Cup"],
+"Vacance Famille Region Malaga":["#FFCD9A","#A04600","Malaga · Famille"],
+"Vacance Famille Villedieu":["#FFCD9A","#A04600","Villedieu · Famille"],
+"WEC ou Malaga":["#FFCD9A","#A04600","Malaga / WEC"],
+"WEC Bellac":["#D4B896","#6B4226","WEC Bellac"],
+"WE Bellac":["#D4B896","#6B4226","WE Bellac"],
+"Mariage Amaury":["#F5DC8A","#7A5A0E","Mariage Amaury"],
+"Saint Jean Bruel ?":["#E5DAF5","#5C3D9C","St Jean Bruel"]
+};
+const MFR={6:"Juin",7:"Juillet",8:"Août"};
+const DFR={Sa:"Sa",Su:"Di",Mo:"Lu",Tu:"Ma",We:"Me",Th:"Je",Fr:"Ve"};
+const PEOPLE=["anatole","auguste","sixtine","carole","jal"];
+const PNAME={anatole:"Anatole",auguste:"Auguste",sixtine:"Sixtine",carole:"Carole",jal:"JAL"};
+const PCOLOR={anatole:"#3D5A80",auguste:"#A04020",sixtine:"#9C2A6B",carole:"#7A5A0E",jal:"#1F5C3D"};
+// Activities that are routine / not noteworthy as temps forts
+const ROUTINE_ACTS=new Set(["WeekEnd Dubai","Boulot Dubai","Ecole Dubai","Dubai","Stage ou Petit Boulot","Boulot Geneva","School Start"]);
+function isRoutine(act){
+  if(!act)return true;
+  if(ROUTINE_ACTS.has(act))return true;
+  if(/dubai/i.test(act))return true; // any "Dubai" variant (Dubai - Off, etc.)
+  if(/^(?:Flight|Vol|Fly|Train|TGV|TER)\b/i.test(act))return true;
+  if(/^[A-Za-zÀ-ÿ]+(?:-[A-Za-zÀ-ÿ]+)+$/.test(act))return true; // transit routes
+  return false;
+}
+function iconFor(act){
+  if(!act)return "✨";
+  if(/Malaga/i.test(act))return "☀";
+  if(/Villedieu/i.test(act))return "🏡";
+  if(/Fleac/i.test(act))return "🌳";
+  if(/Mariage/i.test(act))return "💍";
+  if(/Roches/i.test(act))return "⛰";
+  if(/Dance Cup|Dublin/i.test(act))return "🩰";
+  if(/Megève|Megeve/i.test(act))return "⛷";
+  if(/Lacanau/i.test(act))return "🏖";
+  if(/Bayonne/i.test(act))return "🏡";
+  if(/Colo/i.test(act))return "🌲";
+  if(/Palmyre/i.test(act))return "🏰";
+  if(/Papou.*Mamou|Gonfaron/i.test(act))return "👴";
+  if(/Geneva|Genève/i.test(act))return "🇨🇭";
+  if(/Saint Jean|St Jean/i.test(act))return "🪨";
+  if(/Chantier/i.test(act))return "⚒";
+  if(/Bellac|WEC/i.test(act))return "🏞";
+  return "✨";
+}
+function computeHighlights(person){
+  const stretches=[];let cur=null;
+  for(const d of DAYS){
+    const act=d[person];
+    if(isRoutine(act)){if(cur){stretches.push(cur);cur=null;}continue;}
+    if(cur&&cur.activity===act){cur.end=d.date;cur.days++;}
+    else{if(cur)stretches.push(cur);cur={start:d.date,end:d.date,activity:act,days:1};}
+  }
+  if(cur)stretches.push(cur);
+  return stretches;
+}
+let DATA={"d":[["06-20","Sa","WeekEnd Dubai","WeekEnd Dubai","WeekEnd Dubai","WeekEnd Dubai","WeekEnd Dubai"],["06-21","Su","WeekEnd Dubai","WeekEnd Dubai","WeekEnd Dubai","WeekEnd Dubai","WeekEnd Dubai"],["06-22","Mo","Dubai - Off","Dubai - Off","Ecole Dubai","Boulot Dubai","Boulot Dubai"],["06-23","Tu","Dubai - Off","Dubai - Off","Ecole Dubai","Boulot Dubai","Boulot Dubai"],["06-24","We","Dubai - Off","Dubai - Off","Ecole Dubai","Boulot Dubai","Boulot Dubai"],["06-25","Th","Dubai - Off","Dubai - Off","Ecole Dubai","Boulot Dubai","Boulot Dubai"],["06-26","Fr","Dubai - Off","Dubai - Off","Ecole Dubai","Boulot Dubai","Boulot Dubai"],["06-27","Sa","WeekEnd Dubai","WeekEnd Dubai","WeekEnd Dubai","WeekEnd Dubai","WeekEnd Dubai"],["06-28","Su","Flight Dubai-Nice","Flight Dubai-Nice","Flight Dubai-Geneva","WeekEnd Dubai","Flight Dubai-Geneva"],["06-29","Mo","Gonfaron","Gonfaron","Megeve - Luce","Boulot Dubai","Boulot Geneva"],["06-30","Tu","Gonfaron","Gonfaron","Megeve - Luce","Boulot Dubai","Boulot Geneva"],["07-01","We","Gonfaron","Gonfaron","Megeve - Luce","Boulot Dubai","Boulot Geneva"],["07-02","Th","Gonfaron","Gonfaron","Megeve - Luce","Boulot Dubai","Boulot Geneva"],["07-03","Fr","Gonfaron","Gonfaron","Megeve - Luce","Boulot Dubai","Flight Geneva-Dubai"],["07-04","Sa","Gonfaron","Gonfaron","Megeve - Luce","WeekEnd Dubai","WeekEnd Dubai"],["07-05","Su","Gonfaron","Gonfaron","Colo Montagne","WeekEnd Dubai","WeekEnd Dubai"],["07-06","Mo","Nice-Bordeaux","Gonfaron-Cannes","Colo Montagne","Boulot Dubai","Boulot Dubai"],["07-07","Tu","Lacanau chez Esteban","Chantier Jeune Sainte Marguerite","Colo Montagne","Boulot Dubai","Boulot Dubai"],["07-08","We","Lacanau chez Esteban","Chantier Jeune Sainte Marguerite","Colo Montagne","Boulot Dubai","Boulot Dubai"],["07-09","Th","Lacanau chez Esteban","Chantier Jeune Sainte Marguerite","Colo Montagne","Boulot Dubai","Boulot Dubai"],["07-10","Fr","Lacanau chez Esteban","Chantier Jeune Sainte Marguerite","Colo Montagne","Boulot Dubai","Boulot Dubai"],["07-11","Sa","Lacanau chez Esteban","Chantier Jeune Sainte Marguerite","Colo Montagne","Flight Dubai-Lyon","WeekEnd Dubai"],["07-12","Su","Lacanau chez Esteban","Chantier Jeune Sainte Marguerite","Flight Lyon-Dublin","Flight Lyon-Dublin","WeekEnd Dubai"],["07-13","Mo","Lacanau chez Esteban","Chantier Jeune Sainte Marguerite","Dublin World Dance Cup Final","Dublin World Dance Cup Final","Boulot Dubai"],["07-14","Tu","Lacanau chez Esteban","Chantier Jeune Sainte Marguerite","Dublin World Dance Cup Final","Dublin World Dance Cup Final","Boulot Dubai"],["07-15","We","Lacanau chez Esteban","Chantier Jeune Sainte Marguerite","Dublin World Dance Cup Final","Dublin World Dance Cup Final","Boulot Dubai"],["07-16","Th","Lacanau chez Esteban","Chantier Jeune Sainte Marguerite","Dublin World Dance Cup Final","Dublin World Dance Cup Final","Boulot Dubai"],["07-17","Fr","Lacanau chez Esteban","Chantier Jeune Sainte Marguerite","Dublin World Dance Cup Final","Dublin World Dance Cup Final","Boulot Dubai"],["07-18","Sa","Lacanau chez Esteban","Cannes-Nice-Bordeaux-Saintes-Royan","Flight Dublin-Nice","Flight Dublin-Nice","WeekEnd Dubai"],["07-19","Su","Flight Bordeaux-Malaga","La Palmyre chez Paul","Gonfaron","Gonfaron","WeekEnd Dubai"],["07-20","Mo","Les Roches Summer Camp","La Palmyre chez Paul","Gonfaron","Gonfaron","Boulot Dubai"],["07-21","Tu","Les Roches Summer Camp","La Palmyre chez Paul","Gonfaron","Gonfaron","Boulot Dubai"],["07-22","We","Les Roches Summer Camp","La Palmyre chez Paul","Gonfaron","Gonfaron","Boulot Dubai"],["07-23","Th","Les Roches Summer Camp","La Palmyre chez Paul","Gonfaron","Gonfaron","Boulot Dubai"],["07-24","Fr","Les Roches Summer Camp","La Palmyre chez Paul","Gonfaron","Gonfaron","Boulot Dubai"],["07-25","Sa","Les Roches Summer Camp","Royan-Nantes-Paris-Avignon","Vacance Famille Villedieu","Vacance Famille Villedieu","Flight Dubai-Lyon"],["07-26","Su","Flight Malaga-Marseille","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu"],["07-27","Mo","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu"],["07-28","Tu","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu"],["07-29","We","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu"],["07-30","Th","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu"],["07-31","Fr","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu"],["08-01","Sa","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu"],["08-02","Su","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu","Vacance Famille Villedieu"],["08-03","Mo","Fleac","Fleac","Fleac","Fleac","Fleac"],["08-04","Tu","Fleac","Fleac","Fleac","Fleac","Fleac"],["08-05","We","Fleac","Fleac","Fleac","Fleac","Fleac"],["08-06","Th","Fleac","Fleac","Fleac","Fleac","Fleac"],["08-07","Fr","Fleac","Fleac","Fleac","Fleac","Fleac"],["08-08","Sa","Fleac","Fleac","Fleac","Angouleme-Paris-Dubai","Mariage Amaury"],["08-09","Su","Saint Jean Bruel ?","Fleac","Fleac","WeekEnd Dubai","Mariage Amaury"],["08-10","Mo","Saint Jean Bruel ?","Fleac","Fleac","Boulot Dubai","Fleac"],["08-11","Tu","Saint Jean Bruel ?","Fleac","Fleac","Boulot Dubai","Fleac"],["08-12","We","Saint Jean Bruel ?","Lyon","Lyon","Boulot Dubai","Lyon"],["08-13","Th","Saint Jean Bruel ?","Lyon","Lyon","Boulot Dubai","Lyon"],["08-14","Fr","Lyon","Lyon","Lyon","Boulot Dubai","Lyon"],["08-15","Sa","Flight Lyon-Dubai","Flight Lyon-Dubai","Flight Lyon-Dubai","WeekEnd Dubai","Flight Lyon-Dubai"],["08-16","Su","WeekEnd Dubai","WeekEnd Dubai","WeekEnd Dubai","WeekEnd Dubai","WeekEnd Dubai"],["08-17","Mo","Dubai","Dubai","Dubai","Boulot Dubai","Boulot Dubai"],["08-18","Tu","Dubai","Dubai","Dubai","Boulot Dubai","Boulot Dubai"],["08-19","We","Dubai","Dubai","Dubai","Boulot Dubai","Boulot Dubai"],["08-20","Th","Dubai","Dubai","Dubai","Boulot Dubai","Boulot Dubai"],["08-21","Fr","Dubai","Dubai","Dubai","Boulot Dubai","Boulot Dubai"],["08-22","Sa","WeekEnd Dubai","WeekEnd Dubai","WeekEnd Dubai","WeekEnd Dubai","WeekEnd Dubai"],["08-23","Su","WeekEnd Dubai","WeekEnd Dubai","WeekEnd Dubai","WeekEnd Dubai","WeekEnd Dubai"],["08-24","Mo","School Start","School Start","School Start","Boulot Dubai","Boulot Dubai"]],"c":{"2026-06-28|sixtine":"Emirates Booking reference: IABDD6\nEK 089 Sun 28 Jun 2026 Dubai to Geneva \n\nFlight departure time: 08:00 \nOrigin: Dubai (DXB) \n\nFlight arrival date time: 13:15 \nDestination: Geneva (GVA)\n\nCost: AED 2,125 - Vol Sixtine avec Dad en biz (surprise) !","2026-06-28|jal":"Emirates Booking reference: I7BY7B\nEK 089 Sun 28 Jun 2026 Dubai to Geneva \n\nFlight departure time: 08:00 \nOrigin: Dubai (DXB) \n\nFlight arrival date time: 13:15 \nDestination: Geneva (GVA)\n\nVol Sixtine avec Dad en biz (surprise) !","2026-07-03|jal":"Emirates Booking reference: I7BY7B\nEK 090 Fri 03 July 2026 Geneva to Dubai \n\nFlight departure time: 15:15\nOrigin: Geneva (GVA) \n\nFlight arrival date time: 23:40 \nDestination: Dubai (DXB)","2026-07-06|auguste":"Gonfaron Cannes en voiture avec Papou Mamou","2026-07-12|sixtine":"Aer Lingus Booking reference: 32AE6N\nEI 551 Sun 12 July 2026 Lyon to Dublin\n\nFlight departure time: 10:10\nOrigin: Lyon (LYS)\n\nFlight arrival date time: 11:30\nDestination: Dublin (DUB)\n\nCost: AED 2,922 (AED 1,461 per person) - Vol avec Maman","2026-07-12|carole":"Aer Lingus Booking reference: 32AE6N\nEI 551 Sun 12 July 2026 Lyon to Dublin\n\nFlight departure time: 10:10\nOrigin: Lyon (LYS)\n\nFlight arrival date time: 11:30\nDestination: Dublin (DUB)\n\nCost: AED 2,922 (AED 1,461 per person) - Vol avec Sixtine","2026-07-18|auguste":"Ste Marguerite - Port de Cannes en ferry: 07:30 - 08:00\n\nPort de Cannes - Nice Airport en voiture (Grand Père de Milo): 08:00 - 09:00\n\nAir France Booking reference:\nAF7652 Sat 18 July 2026 Nice to Bordeaux\n\nFlight departure time: 11:20\nOrigin: Nice (NCE)\nFlight arrival date time: 12:45\nDestination: Bordeaux (BOD)\nCost: \n\nBordeaux Mérignac - Bordeaux St Jean\nBus direct Ligne 30’Direct\nDépart: Aéroport Bordeaux Mérignac\nArrivée: Gare Bordeaux Saint-Jean\nDurée: ~30 min\n\nTrain Bordeaux-Saintes\nDeparture (Bordeaux St-Jean): 16:35\nArrival (Saintes): 18:00\nReference #: \nTicket #: \n\nTrain Saintes-Royan\nDeparture (Saintes): 18:15\nArrival (Royan): 18:50\nReference #: \nTicket #: \n\nRoyan La Palmyre en voiture avec les parents de Paul","2026-07-25|jal":"Emirates Booking reference: IWET6F\nEK 081 Sat 25 July 2026 Dubai to Lyon\n\nFlight departure time: 08:55\nOrigin: Dubai (DXB)\n\nFlight arrival date time: 13:50\nDestination: Lyon (LYS)\n\nCost: AED 6,980","2026-08-08|carole":"TGV Inoui Angouleme Paris Charles de Gaule\nDeparture (Angoulême): 06:36am\nArrival (CDG): 09;41am\nReference #: UWTHW6\nTicket #: 884553033\nCost: AED 308\n\n\nEmirates Booking reference: M4DVWW\nEK 074 Sat 08 Aug 2026 Paris to Dubai\n\nFlight departure time: 15:35\nOrigin: Paris Charles de Gaule (CDG)\n\nFlight arrival date time: 00:20\nDestination: Dubai (DXB)\n\nCost: AED 3,021","2026-08-15|anatole":"Emirates Booking reference: IQNA7B\nEK 082 Sat 15 Aug 2026 Lyon to Dubai\n\nFlight departure time:15:40\nOrigin: Lyon (LYS)\n\nFlight arrival date time:23:59\nDestination: Dubai (DXB)\n\nCost: AED 7,974\n\nTrajet Anatole, Auguste, Sixtine et Papa","2026-08-15|auguste":"Emirates Booking reference: IQNA7B\nEK 082 Sat 15 Aug 2026 Lyon to Dubai\n\nFlight departure time:15:40\nOrigin: Lyon (LYS)\n\nFlight arrival date time:23:59\nDestination: Dubai (DXB)\n\nCost: AED 7,974\n\nTrajet Anatole, Auguste, Sixtine et Papa","2026-08-15|sixtine":"Emirates Booking reference: IQNA7B\nEK 082 Sat 15 Aug 2026 Lyon to Dubai\n\nFlight departure time:15:40\nOrigin: Lyon (LYS)\n\nFlight arrival date time:23:59\nDestination: Dubai (DXB)\n\nCost: AED 7,974\n\nTrajet Anatole, Auguste, Sixtine et Papa","2026-08-15|jal":"Emirates Booking reference: IWET6F\nEK 082 Sat 15 Aug 2026 Lyon to Dubai\n\nFlight departure time: 15:40\nOrigin: Lyon (LYS)\n\nFlight arrival date time: 23:59\nDestination: Dubai (DXB)\n\nCost: AED 6,980\n\nTrajet Anatole, Auguste, Sixtine et Papa","2026-06-28|anatole":"Emirates Booking reference: RPSVVW\nEK 077 Sun 28 Jun 2026 Dubai to Nice \n\nFlight departure time:08:40 \nOrigin: Dubai (DXB) \n\nFlight arrival date time:13:30 \nDestination: Nice (NCE)\n\nCost: AED 5,290 (AED 2,645 per person) - Vol avec Auguste","2026-06-28|auguste":"Emirates Booking reference: RPSVVW\nEK 077 Sun 28 Jun 2026 Dubai to Nice \n\nFlight departure time:08:40 \nOrigin: Dubai (DXB) \n\nFlight arrival date time:13:30 \nDestination: Nice (NCE)\n\nCost: AED 5,290 (AED 2,645 per person) - Vol avec Anatole","2026-07-18|sixtine":"Aer Lingus Booking reference: 2Y8GKN\nEI 544 Sun 19 July 2026 Dublin to Nice\n\nFlight departure time: 11:00\nOrigin: Dublin (DUB)\n\nFlight arrival date time: 14:45\nDestination: Nice (NCE)\n\nCost: AED 2,110 (AED 1,055 per person) - Vol avec Maman","2026-07-18|carole":"Aer Lingus Booking reference: 2Y8GKN\nEI 544 Sun 19 July 2026 Dublin to Nice\n\nFlight departure time: 11:00\nOrigin: Dublin (DUB)\n\nFlight arrival date time: 14:45\nDestination: Nice (NCE)\n\nCost: AED 2,110 (AED 1,055 per person) - Vol avec Sixtine","2026-07-11|carole":"Emirates Booking reference: QKHD2B\nEK 081 Sat 11 July 2026 Dubai to Lyon\n\nFlight departure time: 08:55\nOrigin: Dubai (DXB)\n\nFlight arrival date time: 13:50\nDestination: Lyon (LYS)\n\nCost: AED 2,815","2026-07-19|anatole":"Volotea Booking reference: U92R9M\nV73843 Sun 19 July 2026 Bordeaux to Malaga \n\nFlight departure time: 14:00\nOrigin: Bordeaux (BOD) \n\nFlight arrival date time: 15:55\nDestination: Malaga (AGP)\n\nCost: AED 508","2026-07-26|anatole":"Ryanair Booking reference: X4SZ7Q\nFR6622 Sun 26 July 2026 Malaga to Marseille\n\nFlight departure time: 09:05\nOrigin: Malaga (AGP)\n\nFlight arrival date time: 11:05\nDestination: Marseille (MAR)\n\nCost: AED 473","2026-07-25|auguste":"La Palmyre - Royan en voiture avec les parents de Paul\n\nTrain Royan-Nantes\nDeparture (Royan): \nArrival (Nantes): \nReference #: \nTicket #: \n\nTrain Nantes-Paris\nDeparture (Nantes): \nArrival (Paris): \nReference #: \nTicket #: \n\nTrain Paris-Avignon\nDeparture (Paris): \nArrival (Avignon): \nReference #: \nTicket #:","2026-07-06|anatole":"Volotea Booking reference: Z9S4GM \nV72431 Mon 06 July 2026 Nice to Bordeaux\n\nFlight departure time: 12:40\nOrigin: Nice (NCE)\n\nFlight arrival date time: 14:10\nDestination: Bordeaux (BOD)\n\nCost: AED 448\n\nBordeaux Lacanau en voiture avec les parents d'Esteban"}};
+function esc(s){return (s==null?"":String(s)).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
+const CITY_CODES={dubai:"DXB",dxb:"DXB",geneva:"GVA",geneve:"GVA",genève:"GVA",gva:"GVA",dublin:"DUB",dub:"DUB",nice:"NCE",nce:"NCE",malaga:"AGP",málaga:"AGP",agp:"AGP",bordeaux:"BOD",bod:"BOD",paris:"CDG",cdg:"CDG",lyon:"LYS",lys:"LYS",london:"LHR",londres:"LHR",lhr:"LHR",madrid:"MAD",mad:"MAD",barcelona:"BCN",barcelone:"BCN",bcn:"BCN",amsterdam:"AMS",ams:"AMS",frankfurt:"FRA",francfort:"FRA",fra:"FRA",rome:"FCO",fco:"FCO",milan:"MXP",mxp:"MXP",zurich:"ZRH",zrh:"ZRH",istanbul:"IST",ist:"IST","new york":"JFK",jfk:"JFK"};
+function abbrCity(n){const k=n.trim().toLowerCase();return CITY_CODES[k]||n.trim().slice(0,3).toUpperCase()}
+function abbrRoute(route){
+  // Split on -, →, " to ", " - ", " "
+  const parts=route.split(/\s*(?:→|->|—|–|-|\s+to\s+|\s+vers\s+)\s*/i).map(s=>s.trim()).filter(Boolean);
+  if(parts.length>=2)return parts.map(abbrCity).join("→");
+  return route;
+}
+function catFor(act){
+  if(CAT[act])return CAT[act];
+  if(!act)return["#F0EAD2","#5C5A2E",""];
+  // Flight pattern: "Flight Lyon-Dublin", "Vol Paris-Madrid", etc.
+  const flightMatch=act.match(/^(?:flight|vol|fly)\s+(.+)$/i);
+  if(flightMatch){return["#FCE3DA","#A04020","✈ "+abbrRoute(flightMatch[1])];}
+  // Train pattern
+  const trainMatch=act.match(/^(?:train|tgv|ter)\s+(.+)$/i);
+  if(trainMatch){return["#E8E4D6","#6B5B2A","🚆 "+abbrRoute(trainMatch[1])];}
+  // Road trip pattern: multiple parts joined with - and no spaces in the parts
+  if(/^[A-Za-zÀ-ÿ]+(-[A-Za-zÀ-ÿ]+){1,}$/.test(act)){
+    return["#F8D6BB","#8A4F1A","⇄ "+abbrRoute(act)];
+  }
+  return["#F0EAD2","#5C5A2E",act];
+}
+function fmtRange(s,e){const sd=new Date(s+"T00:00"),ed=new Date(e+"T00:00");if(s===e)return sd.getDate()+" "+MFR[sd.getMonth()+1];if(sd.getMonth()===ed.getMonth())return sd.getDate()+" → "+ed.getDate()+" "+MFR[sd.getMonth()+1];return sd.getDate()+" "+MFR[sd.getMonth()+1]+" → "+ed.getDate()+" "+MFR[ed.getMonth()+1]}
+let DAYS=[],COMMENTS={};
+function rebuildFromData(){
+  DAYS=DATA.d.map(r=>({date:"2026-"+r[0],day:r[1],anatole:r[2],auguste:r[3],sixtine:r[4],carole:r[5],jal:r[6]}));
+  COMMENTS=DATA.c||{};
+}
+rebuildFromData();
+// Map any activity to a "place key" so different Dubai variants count as the same place
+function togetherKey(act){
+  if(!act)return null;
+  if(/^(?:Flight|Vol|Fly|Train|TGV|TER)\b/i.test(act))return null; // transit
+  if(/^[A-Za-zÀ-ÿ]+(?:-[A-Za-zÀ-ÿ]+)+$/.test(act))return null; // X-Y or X-Y-Z routes
+  if(/Dubai/i.test(act))return "Dubai";
+  if(act==="School Start"||act==="Stage ou Petit Boulot")return "Dubai";
+  return act;
+}
+function isAllTogether(values){
+  const keys=values.map(togetherKey);
+  return !!keys[0]&&keys.every(k=>k===keys[0]);
+}
+function togetherGroups(){const groups=[];let cur=null;for(const d of DAYS){const v=PEOPLE.map(p=>d[p]);const k0=togetherKey(v[0]);const allSame=isAllTogether(v);if(allSame){if(cur&&cur.where===k0){cur.end=d.date;cur.days++}else{if(cur)groups.push(cur);cur={start:d.date,end:d.date,where:k0,days:1}}}else{if(cur){groups.push(cur);cur=null}}}if(cur)groups.push(cur);return groups}
+let SELECTED=null;
+function personSummary(p){
+  let outDubai=0,flights=0,locs=new Set();
+  for(const d of DAYS){const a=d[p];if(!a)continue;
+    if(!a.includes("Dubai")&&!a.startsWith("School"))outDubai++;
+    if(a.startsWith("Flight"))flights++;
+    locs.add(catFor(a)[2]);
+  }
+  return {outDubai,flights,locs:locs.size};
+}
+function renderPersonTiles(){
+  const html=PEOPLE.map(p=>{
+    const s=personSummary(p);
+    const isActive=SELECTED===p?" active":"";
+    const initials=PNAME[p][0];
+    return `<div class="ptile${isActive}" data-p="${p}" style="--accent:${PCOLOR[p]};border-top-color:${PCOLOR[p]}">
+      <div class="pt-avatar">${initials}</div>
+      <div class="pt-name">${esc(PNAME[p])}</div>
+      <div class="pt-sum">${s.outDubai} j hors Dubai · ${s.flights} vol${s.flights>1?"s":""}</div>
+      <div class="pt-cta">${isActive?"Cliquez pour fermer":"Voir programme"}</div>
+    </div>`;
+  }).join("");
+  document.getElementById("ptiles").innerHTML=html;
+  document.querySelectorAll(".ptile").forEach(el=>{
+    el.addEventListener("click",()=>{
+      const p=el.getAttribute("data-p");
+      SELECTED=(SELECTED===p)?null:p;
+      renderAll();
+    });
+  });
+}
+function renderFilterBanner(){
+  const fb=document.getElementById("filterBanner");
+  if(!SELECTED){fb.innerHTML="";return;}
+  fb.innerHTML=`<div class="filter-banner"><span><strong>${PNAME[SELECTED]}</strong> sélectionné — temps forts, calendrier et logistique filtrés.</span><button onclick="clearFilter()">Tout afficher</button></div>`;
+}
+function renderHighlights(){
+  const wrap=document.getElementById("hl-wrap");
+  wrap.style.display="block"; // always visible — auto-updates on every edit
+  const persons=SELECTED?[SELECTED]:PEOPLE;
+  const all=persons.map(p=>({person:p,stretches:computeHighlights(p)})).filter(x=>x.stretches.length>0);
+  const totalCount=all.reduce((a,x)=>a+x.stretches.length,0);
+  document.getElementById("hl-section-title").textContent=SELECTED?`Temps forts — ${PNAME[SELECTED]}`:"Temps forts";
+  document.getElementById("hl-section-hint").textContent=SELECTED?`${totalCount} événement${totalCount>1?'s':''} cet été · auto-calculés depuis le calendrier`:`${totalCount} événement${totalCount>1?'s':''} cet été pour la famille · auto-calculés depuis le calendrier · clic sur une tuile pour filtrer`;
+  if(totalCount===0){
+    document.getElementById("highlights").innerHTML=`<div style="grid-column:1/-1;padding:20px;color:var(--ink-3);text-align:center;font-size:13px">Aucun temps fort.</div>`;
+    return;
+  }
+  const cards=all.flatMap(x=>x.stretches.map(h=>{
+    const[bg,fg,lbl]=catFor(h.activity);
+    const pchip=SELECTED?'':`<span class="p-chip" style="background:${PCOLOR[x.person]};margin-right:6px">${esc(PNAME[x.person])}</span>`;
+    return `<div class="hl-card" style="border-left-color:${fg};background:linear-gradient(to right, ${bg}55, var(--card) 40%)"><div class="hl-icon">${iconFor(h.activity)}</div><div class="hl-body"><div class="hl-title">${pchip}${esc(h.activity)}</div><div class="hl-sub" style="color:${fg};font-weight:500">${esc(fmtRange(h.start,h.end))} · ${h.days} jour${h.days>1?'s':''}</div></div></div>`;
+  }));
+  document.getElementById("highlights").innerHTML=cards.join("");
+}
+function clearFilter(){SELECTED=null;renderAll();}
+function renderTogether(){document.getElementById("together").innerHTML=togetherGroups().map(g=>{const[bg,fg]=catFor(g.where);return `<div class="tg-row"><span class="tg-dates">${fmtRange(g.start,g.end)}</span><span class="tg-count">${g.days} j</span><span class="tg-where" style="color:${fg}">${esc(g.where)}</span></div>`}).join("")}
+function formatNote(text){return text.split("\n").map(line=>{line=line.replace(/^\s+|\s+$/g,"");if(!line)return "<br>";const idx=line.indexOf(":");if(idx>0){const k=line.slice(0,idx).trim();const v=line.slice(idx+1).trim();if(/Flight|Departure|Arrival|Reference|Ticket|Train|Train 1|Train 2|Arrivée|Départ|Durée|Ligne|Direction|Arrêt/i.test(k)){return '<div class="note-line"><span class="note-key">'+esc(k)+':</span> <span class="note-val">'+esc(v)+'</span></div>'}}return '<div class="note-text">'+esc(line)+'</div>'}).join("")}
+function renderTravel(){
+  const peopleScope=SELECTED?[SELECTED]:PEOPLE;
+  const events=[];
+  for(const d of DAYS){
+    for(const p of peopleScope){
+      const act=d[p];
+      const isTravel=act&&(/^(?:flight|vol|fly|train|tgv|ter)\b/i.test(act)||/^[A-Za-zÀ-ÿ]+(-[A-Za-zÀ-ÿ]+){1,}$/.test(act));
+      const note=COMMENTS[d.date+"|"+p];
+      if(isTravel||note)events.push({date:d.date,person:p,activity:act,note:note||""});
+    }
+  }
+  document.getElementById("travel-section-title").textContent=SELECTED?`Logistique de voyage — ${PNAME[SELECTED]}`:"Logistique de voyage";
+  document.getElementById("travel-section-hint").textContent=SELECTED?`vols, trains, transferts de ${PNAME[SELECTED]}`:"vols, trains, transferts — détails extraits des notes du XLS";
+  const travelDiv=document.getElementById("travel");
+  const emptyDiv=document.getElementById("travel-empty");
+  if(events.length===0){
+    travelDiv.style.display="none";
+    emptyDiv.style.display="block";
+    emptyDiv.textContent=`Aucun voyage prévu pour ${PNAME[SELECTED]}.`;
+    return;
+  }
+  travelDiv.style.display="";
+  emptyDiv.style.display="none";
+  const map=new Map();
+  for(const e of events){
+    const k=e.date+"||"+e.activity+"||"+e.note;
+    if(!map.has(k))map.set(k,{date:e.date,activity:e.activity,note:e.note,persons:[]});
+    map.get(k).persons.push(e.person);
+  }
+  const grouped=[...map.values()].sort((a,b)=>(a.date+a.activity).localeCompare(b.date+b.activity));
+  travelDiv.innerHTML=grouped.map(g=>{
+    const dt=new Date(g.date+"T00:00");
+    const dlbl=DFR[["Su","Mo","Tu","We","Th","Fr","Sa"][dt.getDay()]]+" "+dt.getDate()+" "+MFR[dt.getMonth()+1];
+    const chips=g.persons.map(p=>`<span class="p-chip" style="background:${PCOLOR[p]}">${esc(PNAME[p])}</span>`).join("");
+    let nh="";if(g.note)nh='<div class="travel-note">'+formatNote(g.note)+'</div>';
+    return `<div class="travel-card"><div class="travel-head"><div class="travel-date">${esc(dlbl)}</div><div class="travel-route">${esc(g.activity)}</div><div class="travel-persons">${chips}</div></div>${nh}</div>`;
+  }).join("");
+}
+function renderCalendar(){
+  document.getElementById("cal-section-title").textContent=SELECTED?`Calendrier — ${PNAME[SELECTED]}`:"Calendrier détaillé";
+  document.getElementById("cal-section-hint").textContent=SELECTED?`programme jour par jour de ${PNAME[SELECTED]} · cliquez les ● pour les détails de transport`:"cliquez sur les cellules avec ● pour voir les détails de transport";
+  // Header
+  const head=document.getElementById("calhead");
+  if(SELECTED){
+    head.innerHTML=`<tr><th>Jour</th><th>Date</th><th>${esc(PNAME[SELECTED])}</th></tr>`;
+  }else{
+    head.innerHTML='<tr><th>Jour</th><th>Date</th><th>Anatole</th><th>Auguste</th><th>Sixtine</th><th>Carole</th><th>JAL</th><th>Tous</th></tr>';
+  }
+  let html="";let prevM=null;
+  const colspan=SELECTED?3:8;
+  for(const d of DAYS){
+    const dt=new Date(d.date+"T00:00");
+    const m=dt.getMonth()+1;
+    if(m!==prevM){html+=`<tr class="month-row"><td colspan="${colspan}">${MFR[m]} 2026</td></tr>`;prevM=m;}
+    const isWE=dt.getDay()===0||dt.getDay()===6;
+    let rowCells="";
+    function buildCell(p){
+      const act=d[p];
+      const key=d.date+"|"+p;
+      const hasNote=!!COMMENTS[key];
+      if(!act&&!EDIT_MODE)return '<td class="cell"></td>';
+      const isEmpty=!act;
+      const[bg,fg,lbl]=catFor(act||"");
+      const cls=hasNote?" has-note":"";
+      const emptyCls=isEmpty?" empty-cell":"";
+      const marker=hasNote?' <span class="note-icon">●</span>':"";
+      const noteBtn=`<button class="note-btn${hasNote?' has-note':''}" data-note-key="${key}" title="${hasNote?'Modifier la note voyage':'Ajouter une note voyage'}">${hasNote?'📝':'+📝'}</button>`;
+      const labelInner=isEmpty?'<span class="empty-placeholder">+ ajouter</span>':`${esc(lbl)}${marker}`;
+      const styleAttr=isEmpty?'':`style="background:${bg};color:${fg}"`;
+      return `<td class="cell${cls}${emptyCls}" data-key="${key}" ${styleAttr} title="${esc(act)}"><span class="cell-label">${labelInner}</span>${noteBtn}</td>`;
+    }
+    if(SELECTED){
+      rowCells=buildCell(SELECTED);
+    }else{
+      const v=PEOPLE.map(p=>d[p]);
+      const tg=isAllTogether(v);
+      const cells=PEOPLE.map(p=>buildCell(p)).join("");
+      const tgCell=tg?`<td class="together"><span class="together-dot" title="Famille au complet — ${esc(togetherKey(v[0]))}">●</span></td>`:'<td class="together"></td>';
+      rowCells=cells+tgCell;
+    }
+    html+=`<tr class="day-row${isWE?' weekend':''}"><td class="dayname">${DFR[d.day]||d.day}</td><td class="date">${dt.getDate().toString().padStart(2,"0")}/${m.toString().padStart(2,"0")}</td>${rowCells}</tr>`;
+  }
+  document.getElementById("calbody").innerHTML=html;
+  document.querySelectorAll(".cell.has-note").forEach(el=>{
+    el.addEventListener("click",()=>{
+      const k=el.getAttribute("data-key");const[date,p]=k.split("|");
+      const dt=new Date(date+"T00:00");
+      const dlbl=dt.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+      document.getElementById("modalTitle").textContent=PNAME[p]+" · "+dlbl;
+      document.getElementById("modalBody").innerHTML=formatNote(COMMENTS[k]);
+      document.getElementById("modal").classList.add("open");
+    });
+  });
+}
+function renderLegend(){const seen=new Map();for(const d of DAYS){for(const p of PEOPLE){const a=d[p];if(a&&!seen.has(a)){const[bg,fg,lbl]=catFor(a);seen.set(a,{bg,fg,lbl})}}}document.getElementById("legend").innerHTML=[...seen.values()].map(x=>`<span class="leg-chip" style="background:${x.bg};color:${x.fg}">${esc(x.lbl)}</span>`).join("")}
+// Map full activity to a clean city/place label
+const PLACE_OF={
+  "Gonfaron":"Gonfaron","Gonfaron chez Papou Mamou":"Gonfaron","Gonfaron-Cannes":"Gonfaron",
+  "Lacanau chez Esteban":"Lacanau","Lacanau-Bayonne":"Lacanau",
+  "Bayonne chez Jeanne":"Bayonne","Bayonne-Bordeaux-Malaga":"Bayonne",
+  "Les Roches Summer Camp":"Les Roches",
+  "Megeve - Luce":"Megeve","Megève - Luce":"Megeve",
+  "Colo Montagne":"Colo Montagne",
+  "Dublin World Dance Cup Final":"Dublin",
+  "La Palmyre chez Paul":"La Palmyre",
+  "Chantier Jeune Sainte Marguerite":"Sainte Marguerite",
+  "Fleac":"Fleac","Fléac":"Fleac",
+  "Saint Jean Bruel ?":"Saint Jean Bruel","Saint Jean Bruel":"Saint Jean Bruel",
+  "Vacance Famille Region Malaga":"Malaga","Vacance Famille Villedieu":"Villedieu",
+  "WEC ou Malaga":"Malaga","WEC Bellac":"Bellac","WE Bellac":"Bellac",
+  "Mariage Amaury":"Mariage Amaury"
+};
+function placeOf(act){
+  if(!act)return"";
+  if(PLACE_OF[act])return PLACE_OF[act];
+  // Strip common French suffixes & marketing words to keep just the place
+  let s=act
+    .replace(/^(?:Flight|Vol|Fly|Train|TGV|TER)\s+/i,"")
+    .replace(/\s+(?:chez|with|avec)\b.*/i,"")
+    .replace(/\s+(?:World|Cup|Final|Summer Camp|Region|Camp|Stage)\b.*/i,"")
+    .replace(/^Vacance(?:s)?\s+(?:Famille\s+)?(?:Region\s+)?/i,"")
+    .replace(/^(?:WEC|WE)\s+(?:ou\s+)?/i,"")
+    .replace(/\s*[?!.]+$/,"")
+    .trim();
+  return s||act;
+}
+function vacationDays(p){
+  // Any Dubai variant counts as routine (Boulot, École, WeekEnd, Stage, School Start, "Dubai - Off", etc.)
+  // For JAL, the Geneva business trip + bookend flights are also excluded.
+  const JAL_EXTRAS=new Set(["Boulot Geneva","Flight Dubai-Geneva","Flight Geneva-Dubai"]);
+  let v=0;
+  for(const d of DAYS){
+    const a=d[p];
+    if(!a)continue;
+    if(isRoutine(a))continue;
+    if(p==="jal"&&JAL_EXTRAS.has(a))continue;
+    v++;
+  }
+  return v;
+}
+function renderPersons(){
+  const html=PEOPLE.map(p=>{
+    const vac=vacationDays(p);
+    // Build chronological stretches of non-routine activities (vacation only)
+    const stretches=[];let cur=null;
+    for(const d of DAYS){
+      const a=d[p];
+      if(isRoutine(a)){if(cur){stretches.push(cur);cur=null;}continue;}
+      if(cur&&cur.activity===a){cur.end=d.date;cur.days++;}
+      else{if(cur)stretches.push(cur);cur={start:d.date,end:d.date,activity:a,days:1};}
+    }
+    if(cur)stretches.push(cur);
+    const rows=stretches.map(s=>{
+      const[bg,fg,lbl]=catFor(s.activity);
+      return `<div class="bd-row"><span class="bd-label" style="color:${fg}" title="${esc(s.activity)}">${esc(placeOf(s.activity))}</span><span class="bd-dates">${esc(fmtRange(s.start,s.end))}</span><span class="bd-count">${s.days}j</span></div>`;
+    }).join("");
+    const body=rows||`<div style="padding:14px;color:var(--ink-3);text-align:center;font-size:12px;font-style:italic">Aucun jour de vacances hors Dubai</div>`;
+    return `<div class="person-card" style="--accent:${PCOLOR[p]}">
+      <div class="person-head">
+        <span class="person-name">${esc(PNAME[p])}</span>
+      </div>
+      <div class="vac-title">Jours de vacances <strong>${vac}</strong><span class="vac-suffix">(hors Dubai)</span></div>
+      <div class="person-body" style="margin-top:10px">${body}</div>
+    </div>`;
+  }).join("");
+  document.getElementById("persons").innerHTML=html;
+}
+function closeModal(){
+  document.getElementById("modal").classList.remove("open");
+  document.getElementById("modalBody").style.display="";
+  document.getElementById("modalEdit").style.display="none";
+  document.getElementById("modalActions").classList.remove("show");
+  document.getElementById("modalHelp").style.display="none";
+  EDIT_NOTE_KEY=null;
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+function renderAll(){renderPersonTiles();renderFilterBanner();renderCalendar();renderPersons();applyEditMode();}
+
+let EDIT_MODE=false;
+async function toggleEdit(){
+  const wasEditing=EDIT_MODE;
+  EDIT_MODE=!EDIT_MODE;
+  const btn=document.getElementById("editBtn");
+  const label=document.getElementById("editBtnLabel");
+  if(EDIT_MODE){
+    btn.classList.add("active");
+    label.textContent="Terminer l'édition et sauver";
+    document.body.classList.add("edit-mode");
+    document.getElementById("editBanner").style.display="block";
+    refreshEditBanner();
+    showToast("✏️ Mode édition — cliquez une cellule pour son activité, le 📝 pour la note voyage");
+    renderAll();
+  }else{
+    btn.classList.remove("active");
+    label.textContent="Éditer";
+    document.body.classList.remove("edit-mode");
+    document.getElementById("editBanner").style.display="none";
+    renderAll();
+    // On exit: persist to localStorage immediately, then write the HTML file directly (Chrome/Edge File System Access API)
+    if(wasEditing){
+      try{localStorage.setItem("summerData",JSON.stringify(DATA));markSaved();}catch(e){}
+      const ok=await saveDashboardHtml();
+      if(!ok){
+        // The save failed (Safari, user cancelled, etc.) — localStorage still has the edits
+        showToast("⚠ Sauvegarde HTML échouée — éditions toujours dans le localStorage du navigateur",true);
+      }
+    }
+  }
+}
+let LAST_SAVE_TS=null;
+function markSaved(){LAST_SAVE_TS=new Date();if(EDIT_MODE)refreshEditBanner();}
+function refreshEditBanner(){
+  const banner=document.getElementById("editBanner");if(!banner)return;
+  const ts=LAST_SAVE_TS?LAST_SAVE_TS.toLocaleTimeString("fr-FR"):"jamais";
+  banner.innerHTML=`<div class="edit-banner">
+    <span><strong>Mode édition</strong> — clic sur une cellule = activité · clic sur 📝 = note voyage</span>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span class="save-status">✓ Sauvegarde locale ${ts}</span>
+      <button class="save-btn" onclick="saveAndExport()">💾 Sauvegarder</button>
+    </div>
+  </div>`;
+}
+async function saveAndExport(){
+  try{localStorage.setItem("summerData",JSON.stringify(DATA));markSaved();showToast("✓ Sauvegardé");}catch(e){}
+}
+function applyEditMode(){
+  document.querySelectorAll(".cell[data-key]").forEach(el=>{
+    const labelSpan=el.querySelector(".cell-label");
+    if(EDIT_MODE){
+      // Make the label span editable, NOT the whole cell
+      el.removeAttribute("contenteditable");
+      if(labelSpan){
+        labelSpan.setAttribute("contenteditable","true");
+        labelSpan.setAttribute("spellcheck","false");
+        labelSpan.onkeydown=function(e){
+          if(e.key==="Enter"){e.preventDefault();labelSpan.blur();}
+          if(e.key==="Escape"){e.preventDefault();labelSpan.textContent=labelSpan.dataset.original||"";labelSpan.blur();}
+        };
+        labelSpan.onfocus=function(){
+          const k=el.getAttribute("data-key");
+          const[date,p]=k.split("|");
+          const md=date.slice(5);
+          const row=DATA.d.find(r=>r[0]===md);
+          const colIdx={anatole:2,auguste:3,sixtine:4,carole:5,jal:6}[p];
+          const current=(row&&row[colIdx])||"";
+          labelSpan.dataset.original=current;
+          labelSpan.textContent=current;
+          const range=document.createRange();range.selectNodeContents(labelSpan);
+          const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
+        };
+        labelSpan.onblur=function(){
+          const k=el.getAttribute("data-key");
+          const[date,p]=k.split("|");
+          const md=date.slice(5);
+          const newVal=labelSpan.textContent.trim();
+          const row=DATA.d.find(r=>r[0]===md);
+          if(!row)return;
+          const colIdx={anatole:2,auguste:3,sixtine:4,carole:5,jal:6}[p];
+          const changed=row[colIdx]!==newVal;
+          if(changed){
+            row[colIdx]=newVal;
+            try{localStorage.setItem("summerData",JSON.stringify(DATA));markSaved();}catch(e){}
+            rebuildFromData();
+          }
+          // Always re-render so empty placeholder is restored if user blurred without typing
+          const wasEdit=EDIT_MODE;EDIT_MODE=false;
+          renderAll();
+          EDIT_MODE=wasEdit;
+          if(wasEdit){document.body.classList.add("edit-mode");applyEditMode();}
+          if(changed)showToast(`✓ ${PNAME[p]} · ${date.slice(8)}/${date.slice(5,7)} : "${newVal||'(vide)'}"`);
+        };
+      }
+      // Click on cell body (not note btn) focuses the editable label
+      el.onclick=function(e){
+        if(!EDIT_MODE)return;
+        if(e.target.closest && e.target.closest(".note-btn"))return;
+        e.stopPropagation();
+        if(labelSpan && document.activeElement!==labelSpan){
+          labelSpan.focus();
+        }
+      };
+    }else{
+      // Cleanup edit handlers
+      if(labelSpan){
+        labelSpan.removeAttribute("contenteditable");
+        labelSpan.removeAttribute("spellcheck");
+        labelSpan.onkeydown=null;labelSpan.onfocus=null;labelSpan.onblur=null;
+      }
+      el.onclick=null;
+      const k=el.getAttribute("data-key");
+      if(COMMENTS[k]){
+        el.addEventListener("click",function(){
+          const[date,p]=k.split("|");
+          const dt=new Date(date+"T00:00");
+          const dlbl=dt.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+          document.getElementById("modalTitle").textContent=PNAME[p]+" · "+dlbl;
+          document.getElementById("modalBody").style.display="";
+          document.getElementById("modalBody").innerHTML=formatNote(COMMENTS[k]);
+          document.getElementById("modalEdit").style.display="none";
+          document.getElementById("modalActions").classList.remove("show");
+          document.getElementById("modalHelp").style.display="none";
+          document.getElementById("modal").classList.add("open");
+        });
+      }
+    }
+  });
+  // Bind note buttons (visible only in edit mode via CSS)
+  document.querySelectorAll(".note-btn").forEach(btn=>{
+    btn.onclick=function(e){
+      e.stopPropagation();e.preventDefault();
+      if(!EDIT_MODE)return;
+      openNoteEditor(btn.getAttribute("data-note-key"));
+    };
+  });
+}
+
+let EDIT_NOTE_KEY=null;
+function openNoteEditor(key){
+  EDIT_NOTE_KEY=key;
+  const[date,p]=key.split("|");
+  const dt=new Date(date+"T00:00");
+  const dlbl=dt.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+  const existing=COMMENTS[key]||"";
+  document.getElementById("modalTitle").textContent=`📝 Note voyage — ${PNAME[p]} · ${dlbl}`;
+  document.getElementById("modalBody").style.display="none";
+  document.getElementById("modalEdit").style.display="block";
+  document.getElementById("modalEdit").value=existing;
+  document.getElementById("modalHelp").style.display="block";
+  document.getElementById("modalActions").classList.add("show");
+  document.getElementById("modal").classList.add("open");
+  setTimeout(()=>document.getElementById("modalEdit").focus(),50);
+}
+function saveNote(){
+  if(!EDIT_NOTE_KEY)return;
+  const newText=document.getElementById("modalEdit").value.trim();
+  if(newText){DATA.c[EDIT_NOTE_KEY]=newText;}
+  else{delete DATA.c[EDIT_NOTE_KEY];}
+  try{localStorage.setItem("summerData",JSON.stringify(DATA));markSaved();}catch(e){}
+  rebuildFromData();
+  closeModal();
+  renderAll();
+  showToast(newText?"✓ Note voyage enregistrée":"Note voyage supprimée");
+}
+function deleteNote(){
+  if(!EDIT_NOTE_KEY)return;
+  if(!confirm("Supprimer cette note voyage ?"))return;
+  delete DATA.c[EDIT_NOTE_KEY];
+  try{localStorage.setItem("summerData",JSON.stringify(DATA));markSaved();}catch(e){}
+  rebuildFromData();
+  closeModal();
+  renderAll();
+  showToast("Note voyage supprimée");
+}
+
+// ==== File System Access — write directly to a chosen file (e.g. on pCloud) ====
+const IDB_NAME="jalSummerDB",IDB_STORE="handles",IDB_KEY_XLSX="summerXlsx",IDB_KEY_HTML="dashboardHtml";
+function idbOpen(){return new Promise((res,rej)=>{const r=indexedDB.open(IDB_NAME,1);r.onupgradeneeded=()=>r.result.createObjectStore(IDB_STORE);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function idbGet(key){const db=await idbOpen();return new Promise((res,rej)=>{const tx=db.transaction(IDB_STORE,"readonly");const req=tx.objectStore(IDB_STORE).get(key);req.onsuccess=()=>res(req.result);req.onerror=()=>rej(req.error);});}
+async function idbPut(key,v){const db=await idbOpen();return new Promise((res,rej)=>{const tx=db.transaction(IDB_STORE,"readwrite");tx.objectStore(IDB_STORE).put(v,key);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
+async function idbDel(key){const db=await idbOpen();return new Promise((res,rej)=>{const tx=db.transaction(IDB_STORE,"readwrite");tx.objectStore(IDB_STORE).delete(key);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
+
+async function buildXlsxBlob(){
+  const aoa=[[],["Day","Dates","Anatole","Auguste","Sixtine","Carole","JAL","Dates 2","Day 2"]];
+  const DAY_LONG={Sa:"Saturday",Su:"Sunday",Mo:"Monday",Tu:"Tuesday",We:"Wednesday",Th:"Thursday",Fr:"Friday"};
+  for(const r of DATA.d){
+    const md=r[0];const dt=new Date("2026-"+md+"T00:00");
+    const dayName=DAY_LONG[r[1]]||r[1];
+    aoa.push([dayName,dt,r[2],r[3],r[4],r[5],r[6],dt,dayName]);
+  }
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  const COL_LETTER={anatole:"C",auguste:"D",sixtine:"E",carole:"F",jal:"G"};
+  for(const key of Object.keys(DATA.c||{})){
+    const[date,p]=key.split("|");
+    const md=date.slice(5);
+    const idx=DATA.d.findIndex(r=>r[0]===md);
+    if(idx<0)continue;
+    const rowNum=idx+3;
+    const cellAddr=COL_LETTER[p]+rowNum;
+    if(!ws[cellAddr])ws[cellAddr]={t:"s",v:""};
+    ws[cellAddr].c=[{a:"JAL Dashboard",t:DATA.c[key]}];
+  }
+  const lastRow=DATA.d.length+2;
+  for(let r=3;r<=lastRow;r++){for(const col of["B","H"]){const ad=col+r;if(ws[ad])ws[ad].t="d";}}
+  ws["!cols"]=[{wch:11},{wch:12},{wch:32},{wch:32},{wch:28},{wch:24},{wch:18},{wch:12},{wch:11}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Summer 2026");
+  const ab=XLSX.write(wb,{bookType:"xlsx",type:"array"});
+  return new Blob([ab],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+}
+
+async function ensurePermission(handle){
+  if(!handle)return false;
+  try{
+    if((await handle.queryPermission({mode:"readwrite"}))==="granted")return true;
+    return (await handle.requestPermission({mode:"readwrite"}))==="granted";
+  }catch(e){return false;}
+}
+
+async function writeBlobToHandle(handle,blob){
+  const writable=await handle.createWritable();
+  await writable.write(blob);
+  await writable.close();
+}
+
+let SAVE_HANDLE=null,HTML_HANDLE=null;
+async function ensureHandle(forcePicker){
+  if(!("showSaveFilePicker" in window))return null;
+  if(!forcePicker){
+    try{const stored=await idbGet(IDB_KEY_XLSX);if(stored && await ensurePermission(stored)){SAVE_HANDLE=stored;return stored;}}catch(e){}
+  }
+  try{
+    const handle=await window.showSaveFilePicker({
+      suggestedName:"Summer 2026.xlsx",
+      types:[{description:"Excel",accept:{"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":[".xlsx"]}}]
+    });
+    await idbPut(IDB_KEY_XLSX,handle);
+    SAVE_HANDLE=handle;
+    return handle;
+  }catch(e){
+    if(e.name!=="AbortError"){console.error(e);showToast("Sélection annulée : "+e.message,true);}
+    return null;
+  }
+}
+
+// ==== Save the dashboard HTML file itself (rewriting the `let DATA={...}` constant) ====
+function isValidDashboardFilename(name){
+  if(!name)return false;
+  return /summer[\s_-]?2026/i.test(name)&&/\.html?$/i.test(name);
+}
+async function saveDashboardHtml(){
+  if(!("showSaveFilePicker" in window)){
+    showToast("Sauvegarde HTML directe non supportée (Safari/Firefox) — utilise Chrome/Edge",true);
+    return false;
+  }
+  // Step 1: get a handle. Open picker IMMEDIATELY if no valid in-memory handle (preserve user activation).
+  let handle=HTML_HANDLE;
+  if(!handle||!isValidDashboardFilename(handle.name)){
+    try{
+      handle=await window.showSaveFilePicker({
+        suggestedName:"JAL_Summer_2026_Dashboard.html",
+        types:[{description:"Dashboard JAL Summer 2026",accept:{"text/html":[".html",".htm"]}}]
+      });
+    }catch(e){
+      if(e.name==="AbortError"){showToast("Sauvegarde annulée (picker fermé)",true);return false;}
+      console.error(e);
+      showToast("Erreur picker : "+e.message,true);
+      return false;
+    }
+    if(!isValidDashboardFilename(handle.name)){
+      showToast(`✗ Fichier refusé : "${handle.name}". Choisis un fichier dont le nom contient "Summer 2026".`,true);
+      return false;
+    }
+    HTML_HANDLE=handle;
+    try{await idbPut(IDB_KEY_HTML,handle);}catch(e){console.warn("Failed to persist handle",e);}
+  }
+  // Step 2: permission
+  if(!(await ensurePermission(handle))){
+    showToast("Permission refusée pour le fichier HTML",true);
+    return false;
+  }
+  // Step 3: read, replace, write
+  try{
+    const file=await handle.getFile();
+    const oldHtml=await file.text();
+    const dataJson=JSON.stringify(DATA);
+    const newHtml=oldHtml.replace(/let DATA=\{[\s\S]*?\};/m,`let DATA=${dataJson};`);
+    if(newHtml===oldHtml){
+      throw new Error("Pattern 'let DATA={...};' introuvable. Le fichier choisi est-il bien le dashboard ?");
+    }
+    const writable=await handle.createWritable();
+    await writable.write(newHtml);
+    await writable.close();
+    try{localStorage.removeItem("summerData");localStorage.removeItem("summerMeta");}catch(e){}
+    markSaved();
+    showToast(`✓ Sauvegardé dans ${handle.name}`);
+    updateHtmlLocationLabel(handle.name);
+    return true;
+  }catch(e){
+    console.error(e);
+    showToast(`Échec écriture HTML : ${e.message}`,true);
+    return false;
+  }
+}
+async function changeHtmlSaveLocation(){
+  if(!("showSaveFilePicker" in window)){showToast("Non supporté par ce navigateur",true);return;}
+  try{await idbDel(IDB_KEY_HTML);}catch(e){}
+  HTML_HANDLE=null;
+  await saveDashboardHtml();
+}
+async function forgetHtmlSaveLocation(){
+  try{await idbDel(IDB_KEY_HTML);}catch(e){}
+  HTML_HANDLE=null;
+  updateHtmlLocationLabel(null);
+  showToast("Emplacement HTML oublié");
+}
+function updateHtmlLocationLabel(filename){
+  const el=document.getElementById("htmlLocLabel");
+  if(!el)return;
+  if(filename){
+    el.innerHTML=`📝 Dashboard sauvé dans : <strong>${esc(filename)}</strong> · <a href="#" onclick="event.preventDefault();changeHtmlSaveLocation()">Modifier</a> · <a href="#" onclick="event.preventDefault();forgetHtmlSaveLocation()">Oublier</a>`;
+  }else{
+    if("showSaveFilePicker" in window){
+      el.innerHTML=`📝 1er enregistrement du dashboard : il faudra choisir <em>JAL_Summer_2026_Dashboard.html</em> dans pCloud.`;
+    }else{
+      el.innerHTML=`⚠ Sauvegarde HTML directe indisponible (Safari/Firefox).`;
+    }
+  }
+}
+
+async function exportXlsx(forcePicker){
+  if(typeof XLSX==="undefined"){showToast("Librairie XLSX non chargée — vérifie internet",true);return;}
+  const blob=await buildXlsxBlob();
+  if("showSaveFilePicker" in window){
+    const handle=await ensureHandle(forcePicker);
+    if(!handle)return;
+    try{
+      await writeBlobToHandle(handle,blob);
+      showToast(`✓ Enregistré dans "${handle.name}"`);
+      markSaved();
+      updateSaveLocationLabel(handle.name);
+    }catch(e){
+      console.error(e);
+      showToast("Échec de la sauvegarde : "+e.message,true);
+    }
+  }else{
+    const ts=new Date().toISOString().slice(0,10);
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);a.download=`Summer_2026_${ts}.xlsx`;a.click();URL.revokeObjectURL(a.href);
+    showToast(`✓ XLSX téléchargé (Safari/Firefox — pour sauver directement, ouvre dans Chrome/Edge)`);
+    markSaved();
+  }
+}
+
+async function changeSaveLocation(){
+  if(!("showSaveFilePicker" in window)){showToast("Non supporté par ce navigateur — utilise Chrome/Edge pour la sauvegarde directe",true);return;}
+  try{await idbDel(IDB_KEY_XLSX);}catch(e){}
+  SAVE_HANDLE=null;
+  await exportXlsx(true);
+}
+async function forgetSaveLocation(){
+  try{await idbDel(IDB_KEY_XLSX);}catch(e){}
+  SAVE_HANDLE=null;
+  updateSaveLocationLabel(null);
+  showToast("Emplacement de sauvegarde oublié");
+}
+function updateSaveLocationLabel(filename){
+  const el=document.getElementById("saveLocLabel");
+  if(!el)return;
+  if(filename){
+    el.innerHTML=`💾 Sauvegarde directe : <strong>${esc(filename)}</strong> · <a href="#" onclick="event.preventDefault();changeSaveLocation()">Modifier</a> · <a href="#" onclick="event.preventDefault();forgetSaveLocation()">Oublier</a>`;
+  }else{
+    if("showSaveFilePicker" in window){
+      el.innerHTML=`💾 Aucun emplacement configuré · le 1er enregistrement vous demandera de choisir <em>Summer 2026.xlsx</em> dans pCloud.`;
+    }else{
+      el.innerHTML=`⚠ Sauvegarde directe indisponible (Safari/Firefox) — l'export téléchargera un fichier. Utilise Chrome/Edge pour écrire directement dans pCloud.`;
+    }
+  }
+}
+
+// Try to restore the handles on page load
+(async()=>{
+  try{
+    const xlsxH=await idbGet(IDB_KEY_XLSX);
+    if(xlsxH){SAVE_HANDLE=xlsxH;updateSaveLocationLabel(xlsxH.name);}else{updateSaveLocationLabel(null);}
+  }catch(e){updateSaveLocationLabel(null);}
+  try{
+    const htmlH=await idbGet(IDB_KEY_HTML);
+    if(htmlH){
+      if(!isValidDashboardFilename(htmlH.name)){
+        await idbDel(IDB_KEY_HTML);
+        showToast(`Ancien handle invalide nettoyé (${htmlH.name})`,true);
+        updateHtmlLocationLabel(null);
+      }else{HTML_HANDLE=htmlH;updateHtmlLocationLabel(htmlH.name);}
+    }else{updateHtmlLocationLabel(null);}
+  }catch(e){updateHtmlLocationLabel(null);}
+})();
+
+function showToast(msg,isError){
+  const t=document.getElementById("toast");
+  t.textContent=msg;
+  t.className="toast show"+(isError?" error":"");
+  setTimeout(()=>{t.className="toast"+(isError?" error":"")},3500);
+}
+function updateDataStatus(label,fresh){
+  const s=document.getElementById("dataStatus");
+  s.textContent=label;
+  s.className="data-status"+(fresh?" fresh":"");
+  document.getElementById("resetBtn").style.display=fresh?"inline":"none";
+}
+
+// Excel column mapping for the Summer 2026 sheet
+const XLS_COLS={C:"anatole",D:"auguste",E:"sixtine",F:"carole",G:"jal"};
+const XLS_DAYSHORT={Saturday:"Sa",Sunday:"Su",Monday:"Mo",Tuesday:"Tu",Wednesday:"We",Thursday:"Th",Friday:"Fr"};
+
+function parseXlsx(arrayBuffer){
+  if(typeof XLSX==="undefined")throw new Error("La librairie XLSX n'a pas pu être chargée. Vérifie ta connexion internet et recharge la page.");
+  const wb=XLSX.read(arrayBuffer,{type:"array",cellDates:true,cellNF:false,cellText:false});
+  let ws=wb.Sheets["Summer 2026"];
+  if(!ws){ws=wb.Sheets[wb.SheetNames[0]]}
+  if(!ws)throw new Error("Aucune feuille trouvée dans le XLS.");
+  const newDays=[];const newComments={};
+  for(let r=3;r<=200;r++){
+    const dateCell=ws["B"+r];
+    if(!dateCell||dateCell.v===undefined||dateCell.v===null||dateCell.v==="")break;
+    let dt;
+    if(dateCell.v instanceof Date)dt=dateCell.v;
+    else if(typeof dateCell.v==="number")dt=new Date(Math.round((dateCell.v-25569)*86400*1000));
+    else dt=new Date(dateCell.v);
+    if(isNaN(dt.getTime()))continue;
+    const yyyy=dt.getUTCFullYear();
+    const m=String(dt.getUTCMonth()+1).padStart(2,"0");
+    const d=String(dt.getUTCDate()).padStart(2,"0");
+    const dateKey=`${yyyy}-${m}-${d}`;
+    const dayCell=ws["A"+r];
+    const dayName=(dayCell&&dayCell.v)||"";
+    const dayShort=XLS_DAYSHORT[dayName]||String(dayName).slice(0,2);
+    const row=[`${m}-${d}`,dayShort];
+    for(const col of ["C","D","E","F","G"]){
+      const cell=ws[col+r];
+      const val=(cell&&cell.v!=null)?String(cell.v):"";
+      row.push(val);
+      if(cell&&cell.c&&cell.c.length>0){
+        const noteText=cell.c.map(c=>(c.t||"").trim()).filter(Boolean).join("\n");
+        if(noteText)newComments[dateKey+"|"+XLS_COLS[col]]=noteText;
+      }
+    }
+    newDays.push(row);
+  }
+  if(newDays.length===0)throw new Error("Aucune donnée trouvée dans le XLS (colonnes B/C/D/E/F/G à partir de la ligne 3 ?)");
+  return {d:newDays,c:newComments};
+}
+
+async function handleXlsUpload(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  try{
+    const buf=await file.arrayBuffer();
+    const newData=parseXlsx(buf);
+    DATA=newData;
+    rebuildFromData();
+    SELECTED=null;
+    const meta={ts:new Date().toISOString(),name:file.name,days:newData.d.length,notes:Object.keys(newData.c).length};
+    try{localStorage.setItem("summerData",JSON.stringify(DATA));localStorage.setItem("summerMeta",JSON.stringify(meta));}catch(e){}
+    renderAll();
+    updateDataStatus(`Source : ${file.name} · ${meta.days} jours · ${meta.notes} notes voyage · chargé ${new Date().toLocaleString("fr-FR")}`,true);
+    showToast(`✓ Mise à jour : ${meta.days} jours, ${meta.notes} notes voyage`);
+  }catch(e){
+    console.error(e);
+    showToast("Erreur : "+(e.message||e),true);
+  }
+  event.target.value="";
+}
+
+function resetData(){
+  if(!confirm("Réinitialiser le dashboard aux données par défaut (intégrées au fichier) ?"))return;
+  try{localStorage.removeItem("summerData");localStorage.removeItem("summerMeta");}catch(e){}
+  location.reload();
+}
+
+// Load from localStorage if present
+try{
+  const stored=localStorage.getItem("summerData");
+  const storedMeta=localStorage.getItem("summerMeta");
+  if(stored){
+    DATA=JSON.parse(stored);
+    rebuildFromData();
+    if(storedMeta){
+      const m=JSON.parse(storedMeta);
+      const date=new Date(m.ts).toLocaleString("fr-FR");
+      updateDataStatus(`Source : ${m.name} · ${m.days} jours · ${m.notes} notes · chargé ${date}`,true);
+    }
+  }
+}catch(e){console.warn("Could not restore data:",e)}
+
+renderAll();
+</script>
+</body>
+</html>

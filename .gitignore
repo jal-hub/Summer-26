@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+
+# pCloud temp
+.pcloud/
+
+# Editor noise
+.vscode/
+.idea/
+*.swp
+*.swo
