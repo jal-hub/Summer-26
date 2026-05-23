@@ -843,61 +843,49 @@ async function ensureHtmlHandle(forcePicker){
   }
 }
 async function saveDashboardHtml(){
-  if(!("showSaveFilePicker" in window)){
-    showToast("Sauvegarde HTML directe non supportée (Safari/Firefox) — utilise Chrome/Edge",true);
-    return false;
-  }
-  const handle=await ensureHtmlHandle(false);
-  if(!handle)return false;
   try{
-    const file=await handle.getFile();
-    const oldHtml=await file.text();
-
-    // SÉCURITÉ #1 : refuser si le fichier source est déjà vide ou trop petit
-    if(!oldHtml || oldHtml.length<1000){
-      throw new Error(`Fichier source trop petit (${oldHtml.length} octets) — risque de corruption. Restaure depuis un backup d'abord.`);
-    }
-
     const dataJson=JSON.stringify(DATA);
-    let newHtml=oldHtml.replace(/let DATA=\{[\s\S]*?\};(?=\s*function|\s*\/\/)/m,`let DATA=${dataJson};`);
-    if(newHtml===oldHtml){
-      // Fallback : pattern plus relâché
-      newHtml=oldHtml.replace(/let DATA=\{[\s\S]*?\};/m,`let DATA=${dataJson};`);
-      if(newHtml===oldHtml)throw new Error("Pattern 'let DATA={...};' introuvable dans le HTML.");
+
+    // Lire le HTML actuel depuis le DOM (le tag <script> contient le DATA d'origine du fichier)
+    const currentHtml="<!DOCTYPE html>\n"+document.documentElement.outerHTML;
+
+    // SÉCURITÉ #1 : refuser si document trop petit
+    if(!currentHtml || currentHtml.length<1000){
+      throw new Error(`Document trop petit (${currentHtml.length} octets) — abandon.`);
     }
 
-    // SÉCURITÉ #2 : refuser si newHtml est plus petit que prévu (ne devrait jamais arriver)
-    if(!newHtml || newHtml.length<1000){
-      throw new Error(`Nouveau contenu trop petit (${newHtml.length} octets) — abandon pour éviter corruption.`);
+    // Remplacer le DATA constant (chercher d'abord avec le pattern strict, fallback relâché)
+    let newHtml=currentHtml.replace(/let DATA=\{[\s\S]*?\};(?=\s*function|\s*\/\/)/m,`let DATA=${dataJson};`);
+    if(newHtml===currentHtml){
+      newHtml=currentHtml.replace(/let DATA=\{[\s\S]*?\};/m,`let DATA=${dataJson};`);
+      if(newHtml===currentHtml)throw new Error("Pattern 'let DATA={...};' introuvable dans le HTML.");
     }
 
-    // SÉCURITÉ #3 : keepExistingData=true + truncate explicite
-    // Évite que le fichier soit tronqué à 0 si l'écriture/close échoue
-    const writable=await handle.createWritable({keepExistingData:true});
-    try{
-      await writable.write({type:"write",position:0,data:newHtml});
-      await writable.truncate(newHtml.length);
-      await writable.close();
-    }catch(writeErr){
-      try{await writable.abort();}catch(_){}
-      throw new Error("Écriture interrompue : "+writeErr.message);
+    // SÉCURITÉ #2 : refuser si newHtml trop petit
+    if(newHtml.length<1000){
+      throw new Error(`Nouveau HTML trop petit (${newHtml.length} octets) — abandon.`);
     }
 
-    // SÉCURITÉ #4 : vérifier APRÈS écriture que le fichier n'est pas vide
-    const checkFile=await handle.getFile();
-    if(checkFile.size<1000){
-      throw new Error(`Le fichier sauvé fait ${checkFile.size} octets (suspect). LocalStorage conservé pour récupération.`);
-    }
+    // SAUVEGARDE VIA DOWNLOAD (contourne bug pCloud avec File System Access API)
+    const blob=new Blob([newHtml],{type:"text/html"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;
+    a.download="JAL_Summer_2026_Dashboard.html";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
 
-    // Tout est OK → on peut nettoyer le localStorage
-    try{localStorage.removeItem("summerData");localStorage.removeItem("summerMeta");}catch(e){}
     markSaved();
-    showToast(`✓ Sauvegardé dans ${handle.name} (${checkFile.size} octets)`);
-    updateHtmlLocationLabel(handle.name);
+    showToast(`✓ Téléchargement lancé (${newHtml.length} octets) — sauve dans pCloud Summer Plan et écrase l'ancien fichier`);
+
+    // Note : on NE nettoie PAS le localStorage automatiquement (on ne peut pas vérifier
+    // que le fichier a vraiment été sauvé en pCloud). Le localStorage reste comme garde-fou.
     return true;
   }catch(e){
     console.error(e);
-    showToast("⚠ Échec sauvegarde HTML : "+e.message+" (tes éditions sont toujours dans le localStorage)",true);
+    showToast("⚠ Échec sauvegarde : "+e.message+" (tes éditions sont toujours dans le localStorage)",true);
     return false;
   }
 }
