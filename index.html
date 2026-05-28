@@ -243,6 +243,130 @@ body {
 .edit-screen { padding: 40px 24px; text-align: center; color: var(--text-sec); }
 .edit-screen h1 { font-size: 22px; color: var(--text); margin-bottom: 16px; }
 .edit-screen a { color: var(--accent); text-decoration: none; }
+
+/* Calendrier famille (home) */
+.cal-eyebrow {
+  padding: 0 20px;
+  font-size: 13px;
+  color: var(--text-sec);
+  margin-bottom: 8px;
+}
+.cal-wrap { padding: 0 16px 32px; }
+.cal-month {
+  background: var(--card);
+  border: 0.5px solid var(--card-border);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.cal-month-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-transform: capitalize;
+  color: var(--text);
+}
+.cal-dow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  font-size: 11px;
+  color: var(--text-sec);
+  text-align: center;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  padding: 0;
+  -webkit-appearance: none;
+  transition: background 0.12s;
+}
+.cal-day:active { background: var(--separator); }
+.cal-day.is-out { color: var(--text-ter); cursor: default; pointer-events: none; }
+.cal-day.is-today { background: var(--accent); color: white; font-weight: 600; }
+.cal-day.has-event::after {
+  content: "";
+  position: absolute;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-top: 20px;
+}
+.cal-day { position: relative; }
+
+/* Day sheet (bottom modal) */
+.sheet-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.sheet-backdrop.show { opacity: 1; }
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  background: var(--card);
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  padding: 12px 20px calc(env(safe-area-inset-bottom, 0px) + 20px);
+  transform: translateY(100%);
+  transition: transform 0.25s ease-out;
+  z-index: 101;
+  max-height: 85vh;
+  overflow-y: auto;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.sheet.show { transform: translateY(0); }
+.sheet-grip {
+  width: 36px; height: 4px;
+  background: var(--text-ter);
+  border-radius: 2px;
+  margin: 4px auto 14px;
+}
+.sheet-title {
+  font-size: 18px; font-weight: 600;
+  text-align: center;
+  margin-bottom: 16px;
+  text-transform: capitalize;
+  color: var(--text);
+}
+.sheet-row {
+  display: flex; align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  border-top: 0.5px solid var(--separator);
+}
+.sheet-row:first-of-type { border-top: 0; }
+.sheet-row .avatar { width: 32px; height: 32px; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+.sheet-row-name { font-weight: 500; color: var(--text); min-width: 62px; font-size: 14px; }
+.sheet-row-act { color: var(--text-sec); font-size: 14px; flex: 1; }
+.sheet-close {
+  display: block; width: 100%;
+  margin-top: 16px;
+  padding: 13px;
+  background: var(--separator);
+  border: none; border-radius: 12px;
+  font-size: 16px; font-weight: 500;
+  color: var(--text); cursor: pointer;
+  font-family: inherit;
+  -webkit-appearance: none;
+}
 </style>
 </head>
 <body>
@@ -522,6 +646,7 @@ function renderHome() {
   grid.appendChild(rowKids);
   screen.appendChild(grid);
   app.appendChild(screen);
+  app.appendChild(renderCalendar());
 }
 
 function renderProgramme(userId) {
@@ -712,6 +837,89 @@ function blockField(label, value) {
   b.appendChild(el("div", { class: "field-label" }, label));
   b.appendChild(el("div", { class: "field-value" }, value));
   return b;
+}
+
+// === Calendrier famille ============================================================
+const DOW_FR = ["L", "M", "M", "J", "V", "S", "D"];
+
+function renderCalendar() {
+  const wrap = document.createDocumentFragment();
+  wrap.appendChild(el("div", { class: "cal-eyebrow" }, "Calendrier famille — tap sur un jour"));
+  const cal = el("div", { class: "cal-wrap" });
+  const start = parseDate(DATA.meta.dateStart);
+  const end = parseDate(DATA.meta.dateEnd);
+  const startYM = start.getFullYear() * 12 + start.getMonth();
+  const endYM = end.getFullYear() * 12 + end.getMonth();
+  for (let ym = startYM; ym <= endYM; ym++) {
+    cal.appendChild(renderMonth(Math.floor(ym / 12), ym % 12, start, end));
+  }
+  wrap.appendChild(cal);
+  return wrap;
+}
+
+function renderMonth(year, month, dataStart, dataEnd) {
+  const monthEl = el("div", { class: "cal-month" });
+  monthEl.appendChild(el("div", { class: "cal-month-title" }, `${MONTHS_LONG[month]} ${year}`));
+
+  const dowRow = el("div", { class: "cal-dow" });
+  for (const d of DOW_FR) dowRow.appendChild(el("div", null, d));
+  monthEl.appendChild(dowRow);
+
+  const days = el("div", { class: "cal-days" });
+  const firstOfMonth = new Date(year, month, 1);
+  const firstDow = (firstOfMonth.getDay() + 6) % 7; // Lundi = 0
+  for (let i = 0; i < firstDow; i++) days.appendChild(el("div", null));
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateObj = new Date(year, month, d);
+    const inRange = dateObj >= dataStart && dateObj <= dataEnd;
+    const isToday = dateObj.getTime() === TODAY.getTime();
+    const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const cls = "cal-day" + (inRange ? "" : " is-out") + (isToday ? " is-today" : "");
+    const cell = el("button", {
+      class: cls, type: "button",
+    }, String(d));
+    if (inRange) cell.addEventListener("click", () => openDaySheet(iso));
+    days.appendChild(cell);
+  }
+  monthEl.appendChild(days);
+  return monthEl;
+}
+
+function openDaySheet(iso) {
+  const md = iso.slice(5);
+  const row = DATA.d.find(r => r[0] === md);
+  if (!row) return;
+
+  const backdrop = el("div", { class: "sheet-backdrop" });
+  const sheet = el("div", { class: "sheet" });
+  sheet.appendChild(el("div", { class: "sheet-grip" }));
+  sheet.appendChild(el("div", { class: "sheet-title" }, fmtDateSingle(iso)));
+
+  for (const u of DATA.users) {
+    const act = row[USER_COL_IDX[u.id]] || "";
+    sheet.appendChild(el("div", { class: "sheet-row" },
+      el("div", { class: `avatar r-${u.ramp}` }, u.initials || u.nom[0]),
+      el("div", { class: "sheet-row-name" }, u.nom),
+      el("div", { class: "sheet-row-act" }, act || "—"),
+    ));
+  }
+
+  const close = () => {
+    backdrop.classList.remove("show");
+    sheet.classList.remove("show");
+    setTimeout(() => { backdrop.remove(); sheet.remove(); }, 280);
+  };
+  sheet.appendChild(el("button", { class: "sheet-close", type: "button", onClick: close }, "Fermer"));
+  backdrop.addEventListener("click", close);
+
+  document.body.appendChild(backdrop);
+  document.body.appendChild(sheet);
+  requestAnimationFrame(() => {
+    backdrop.classList.add("show");
+    sheet.classList.add("show");
+  });
 }
 
 function renderEdit() {
