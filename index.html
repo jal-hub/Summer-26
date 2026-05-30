@@ -63,8 +63,8 @@ body {
 .screen { padding: 16px 20px 40px; }
 
 /* HOME */
-.home-eyebrow { font-size: 13px; color: var(--text-sec); margin-top: 12px; }
-.home-title { font-size: 28px; font-weight: 600; letter-spacing: -0.4px; margin-top: 4px; }
+.home-title { font-size: 36px; font-weight: 600; letter-spacing: -0.5px; margin-top: 12px; }
+.home-subtitle { font-size: 18px; font-weight: 500; color: var(--text-sec); margin-top: 2px; }
 .home-prompt { font-size: 15px; color: var(--text-sec); margin-top: 6px; margin-bottom: 40px; }
 
 .avatar-grid {
@@ -925,8 +925,8 @@ function renderHome() {
   document.body.classList.remove("edit-mode");
   const app = document.getElementById("app"); app.innerHTML = "";
   const screen = el("div", { class: "screen" });
-  screen.appendChild(el("div", { class: "home-eyebrow" }, DATA.meta.title));
-  screen.appendChild(el("h1", { class: "home-title", style: { marginBottom: "32px" } }, DATA.meta.family));
+  screen.appendChild(el("h1", { class: "home-title" }, DATA.meta.title));
+  screen.appendChild(el("div", { class: "home-subtitle", style: { marginBottom: "32px" } }, DATA.meta.family));
 
   const grid = el("div", { class: "avatar-grid" });
   const rowParents = el("div", { class: "avatar-row" });
