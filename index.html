@@ -751,10 +751,14 @@ function computeStretches(userId) {
 }
 
 function findSejourOthers(titre, dateStart, dateEnd, viewerId) {
+  // Chevauchement : un autre user est "co-présent" si un de ses stretches au même
+  // titre chevauche la fenêtre du viewer (même partiellement).
   const others = [];
   for (const u of DATA.users) {
     if (u.id === viewerId) continue;
-    if (computeStretches(u.id).some(s => s.clean === titre && s.start === dateStart && s.end === dateEnd)) {
+    if (computeStretches(u.id).some(s =>
+      s.clean === titre && s.start <= dateEnd && s.end >= dateStart
+    )) {
       others.push(u.id);
     }
   }
@@ -791,16 +795,17 @@ function computeItems(userId) {
     if (!isTrajet(act)) continue;
     const note = (DATA.c || {})[`${date}|${userId}`] || "";
     const info = parseTrajetNote(note);
-    // Co-voyageurs : même date, même booking ref (ou même act si aucun n'a de ref)
+    // Co-voyageurs : même date + même numéro de vol (ex. EK 089), ou fallback
+    // même activité texte si aucun n'a de numéro de vol (cas des trajets non-aériens).
     const others = [];
     for (const u of DATA.users) {
       if (u.id === userId) continue;
       const u_act = row[USER_COL_IDX[u.id]];
       if (!isTrajet(u_act)) continue;
       const u_info = parseTrajetNote((DATA.c || {})[`${date}|${u.id}`] || "");
-      if (info.reference && u_info.reference) {
-        if (info.reference === u_info.reference) others.push(u.id);
-      } else if (!info.reference && !u_info.reference && u_act === act) {
+      if (info.vol && u_info.vol) {
+        if (info.vol === u_info.vol) others.push(u.id);
+      } else if (!info.vol && !u_info.vol && u_act === act) {
         others.push(u.id);
       }
     }
