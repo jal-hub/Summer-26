@@ -1159,25 +1159,24 @@ function buildExpand(container, item) {
     d.appendChild(el("div", { class: "field-label" }, "Documents"));
     const wrap = el("div");
     for (const doc of o.docs) {
-      const url = doc.url || `docs/${doc.file}`;
+      const rawUrl = doc.url || `docs/${doc.file}`;
       const label = doc.label || doc.file;
+      // Rewrite "docs/..." → GitHub raw (= cross-origin, force iOS PWA à ouvrir Safari natif)
+      // URL absolue http(s) → utilisée telle quelle
+      let url;
+      if (/^https?:\/\//.test(rawUrl)) {
+        url = rawUrl;
+      } else if (rawUrl.startsWith("docs/") || rawUrl.startsWith("avatars/")) {
+        url = `https://raw.githubusercontent.com/jal-hub/jal-summer-2026/main/${rawUrl}`;
+      } else {
+        url = rawUrl;
+      }
       const pill = el("a", {
         class: "doc-pill",
         href: url, target: "_blank", rel: "noopener noreferrer",
       }, iconSpan("doc"), el("span", null, label));
-      pill.addEventListener("click", async (e) => {
-        e.preventDefault();
-        const absUrl = url.startsWith("http") ? url : new URL(url, location.href).href;
-        const isMobile = /iPhone|iPad|iPod|Android/.test(navigator.userAgent);
-        // Mobile : share sheet iOS → user choisit "Open in Safari" pour la full UX
-        // (zoom, share, save to Files, etc.). Retour via app switcher.
-        if (isMobile && navigator.share) {
-          try { await navigator.share({ url: absUrl, title: label }); return; }
-          catch (err) { if (err.name === "AbortError") return; /* sinon fallback */ }
-        }
-        // Desktop : overlay in-app (PDF embed + close + share)
-        openPdfOverlay(url, label);
-      });
+      // Pas de e.preventDefault() : on laisse le navigateur ouvrir l'URL externe
+      // (iOS PWA ouvre Safari natif puisque c'est cross-origin)
       wrap.appendChild(pill);
     }
     d.appendChild(wrap);
