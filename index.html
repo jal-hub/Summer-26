@@ -391,10 +391,20 @@ body {
 .sheet-row {
   display: flex; align-items: center;
   gap: 14px;
-  padding: 10px 0;
+  padding: 10px 4px;
   border-top: 0.5px solid var(--separator);
+  cursor: pointer;
+  border-radius: 8px;
+  margin: 0 -4px;
+  transition: background 0.12s;
 }
 .sheet-row:first-of-type { border-top: 0; }
+.sheet-row:active { background: var(--separator); }
+.sheet-row-chev {
+  color: var(--text-ter);
+  margin-left: auto;
+  font-size: 18px;
+}
 .sheet-row .avatar { width: 32px; height: 32px; font-size: 12px; font-weight: 600; flex-shrink: 0; }
 .sheet-row-name { font-weight: 500; color: var(--text); min-width: 62px; font-size: 14px; }
 .sheet-row-act { color: var(--text-sec); font-size: 14px; flex: 1; }
@@ -958,7 +968,7 @@ function chipText(participants, viewerId) {
 
 function getRoute() {
   const p = new URLSearchParams(location.search);
-  return { edit: p.has("edit"), user: p.get("user") };
+  return { edit: p.has("edit"), user: p.get("user"), day: p.get("day") };
 }
 function navTo(params) {
   const url = new URL(location.href);
@@ -1074,6 +1084,23 @@ function renderProgramme(userId) {
   for (const it of items) cards.appendChild(renderCard(it, userId, parseDate(it.dateEnd) < TODAY));
   app.appendChild(cards);
 
+  // Auto-expand + scroll si l'URL a un paramètre ?day=YYYY-MM-DD
+  const routeDay = getRoute().day;
+  if (routeDay) {
+    setTimeout(() => {
+      const targetCard = [...cards.querySelectorAll(".card")].find(c =>
+        c.dataset.start && c.dataset.end &&
+        routeDay >= c.dataset.start && routeDay <= c.dataset.end
+      );
+      if (targetCard) {
+        targetCard.click();  // déplie la carte
+        targetCard.scrollIntoView({ behavior: "smooth", block: "center" });
+        targetCard.style.outline = "2px solid var(--accent)";
+        setTimeout(() => { targetCard.style.outline = ""; }, 1500);
+      }
+    }, 100);
+  }
+
   if (lastIso < DATA.meta.dateEnd) {
     const startIso = shiftDate(lastIso, 1);
     app.appendChild(el("div", { class: "context-band" },
@@ -1105,6 +1132,8 @@ function renderCard(item, userId, isPast) {
   const card = el("div", {
     class: "card" + (isPast ? " is-past" : "") + (isSejour && o.tentatif ? " is-tentatif" : ""),
   });
+  card.dataset.start = item.date;
+  card.dataset.end = item.dateEnd;
 
   const titleEl = el("span", { class: "card-title" }, o.titre);
   if (isSejour && o.tentatif) titleEl.appendChild(el("span", { class: "tentatif-badge" }, "à confirmer"));
@@ -1311,11 +1340,18 @@ function openDaySheet(iso) {
 
   for (const u of DATA.users) {
     const act = row[USER_COL_IDX[u.id]] || "";
-    sheet.appendChild(el("div", { class: "sheet-row" },
+    const rowEl = el("div", { class: "sheet-row" },
       avatarEl(u),
       el("div", { class: "sheet-row-name" }, u.nom),
       el("div", { class: "sheet-row-act" }, act || "—"),
-    ));
+      el("div", { class: "sheet-row-chev" }, "›"),
+    );
+    rowEl.addEventListener("click", () => {
+      close();
+      // Petit délai pour fluidité de l'animation de fermeture
+      setTimeout(() => navTo({ user: u.id, day: iso }), 260);
+    });
+    sheet.appendChild(rowEl);
   }
 
   const close = () => {
