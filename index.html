@@ -320,21 +320,33 @@ body {
 /* Search */
 .search-fab {
   position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 56px);
-  right: 16px;
   z-index: 60;
   background: var(--card);
   border: 0.5px solid var(--card-border);
   border-radius: 50%;
-  width: 76px; height: 76px;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
   color: var(--text);
   -webkit-appearance: none;
   font-family: inherit;
+  right: 16px;
 }
 .search-fab:active { transform: scale(0.95); }
-.search-fab .icon { width: 30px; height: 30px; display: block; }
+.search-fab .icon { display: block; }
+
+/* Home : taille des avatars home (76px), au niveau du titre Summer 26 */
+.search-fab.is-home {
+  width: 76px; height: 76px;
+  top: calc(env(safe-area-inset-top, 0px) + 56px);
+}
+.search-fab.is-home .icon { width: 30px; height: 30px; }
+
+/* Programme : taille des mini-avatars switcher (30px), 8px sous Sixtine */
+.search-fab.is-programme {
+  width: 30px; height: 30px;
+  top: calc(env(safe-area-inset-top, 0px) + 56px);
+}
+.search-fab.is-programme .icon { width: 14px; height: 14px; }
 
 .search-overlay {
   position: fixed; inset: 0;
@@ -1219,9 +1231,9 @@ function renderHome() {
 }
 
 function addSearchFab() {
-  // Évite doublon
   document.querySelectorAll(".search-fab").forEach(e => e.remove());
-  const fab = el("button", { class: "search-fab", type: "button", title: "Rechercher", onClick: openSearch }, iconSpan("search"));
+  const variant = getRoute().user ? "is-programme" : "is-home";
+  const fab = el("button", { class: "search-fab " + variant, type: "button", title: "Rechercher", onClick: openSearch }, iconSpan("search"));
   document.body.appendChild(fab);
 }
 
