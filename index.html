@@ -264,24 +264,19 @@ body {
 .contact-row a { color: var(--accent); text-decoration: none; }
 
 /* Share buttons */
-.card-share {
-  margin-top: 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  font-size: 13px;
-  background: var(--separator);
+.card-share-icon {
+  margin-left: auto;
+  background: transparent;
   border: none;
-  border-radius: 999px;
-  color: var(--text);
+  padding: 4px 0 4px 12px;
+  color: var(--text-sec);
   cursor: pointer;
   font-family: inherit;
   -webkit-appearance: none;
   align-self: flex-start;
 }
-.card-share:active { opacity: 0.6; }
-.card-share .icon { width: 13px; height: 13px; }
+.card-share-icon:active { opacity: 0.5; }
+.card-share-icon .icon { width: 18px; height: 18px; display: block; }
 
 .doc-pill-wrap { display: inline-flex; align-items: stretch; margin-right: 6px; margin-top: 4px; }
 .doc-pill-wrap .doc-pill {
@@ -1205,7 +1200,9 @@ function renderCard(item, userId, isPast) {
 
   const titleEl = el("span", { class: "card-title" }, o.titre);
   if (isSejour && o.tentatif) titleEl.appendChild(el("span", { class: "tentatif-badge" }, "à confirmer"));
-  const titleRow = el("div", { class: "card-row" }, iconSpan(ic, "card-icon"), titleEl);
+  const shareIconBtn = el("button", { class: "card-share-icon", type: "button", title: "Partager" }, iconSpan("share"));
+  shareIconBtn.addEventListener("click", (e) => { e.stopPropagation(); shareItem(item, userId); });
+  const titleRow = el("div", { class: "card-row" }, iconSpan(ic, "card-icon"), titleEl, shareIconBtn);
   card.appendChild(titleRow);
 
   const meta = isSejour
@@ -1304,15 +1301,7 @@ function buildExpand(container, item, userId) {
     d.appendChild(wrap);
     container.appendChild(d);
   }
-  // Card-level share button : envoie un message structuré (titre, dates, infos, docs URLs)
-  if (userId) {
-    const shareBtn = el("button", { class: "card-share", type: "button" }, iconSpan("share"), "Partager");
-    shareBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      shareItem(item, userId);
-    });
-    container.appendChild(shareBtn);
-  }
+  // Note: le bouton "Partager" carte est dans le titleRow (en haut à droite) — voir renderCard
 }
 
 // === Share helpers ================================================================
@@ -1369,10 +1358,31 @@ async function shareItem(item, userId) {
 }
 
 async function sharePdf(url, label) {
+  // Tente d'abord de partager le PDF comme FICHIER (envoie le doc dans WhatsApp,
+  // pas juste l'URL). Nécessite navigator.canShare({files:...}) — iOS 16+.
+  if (navigator.share && navigator.canShare) {
+    try {
+      showToast("Téléchargement du PDF…");
+      const res = await fetch(url, { credentials: "omit" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const blob = await res.blob();
+      const fileName = (label || "document").replace(/[^a-zA-Z0-9._-]+/g, "_") + ".pdf";
+      const file = new File([blob], fileName, { type: "application/pdf" });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: label });
+        return;
+      }
+    } catch (e) {
+      if (e.name === "AbortError") return;
+      console.warn("Share file failed, fallback to URL:", e);
+    }
+  }
+  // Fallback : partage l'URL
   if (navigator.share) {
     try { await navigator.share({ url, title: label }); return; }
     catch (e) { if (e.name === "AbortError") return; }
   }
+  // Desktop : copie le lien
   try { await navigator.clipboard.writeText(url); showToast("Lien copié"); }
   catch (e) { showToast("Partage indisponible", true); }
 }
