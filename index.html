@@ -1195,13 +1195,23 @@ async function fetchForecast(lat, lng, startIso, endIso) {
 }
 
 // Surcharges manuelles pour les lieux dont le nom du séjour ne géocode pas direct
+// Format : valeur = "string" (= query simple) ou { query, display }
 const LOCATION_OVERRIDES = {
-  "Chantier Jeune Sainte Marguerite": "Cannes",            // Île Sainte-Marguerite, près de Cannes
-  "Les Roches Summer Camp": "Marbella",                    // Les Roches Marbella (Espagne)
-  "Saint Jean Bruel": "Saint-Jean-du-Bruel",               // Commune Aveyron
-  "Mariage Amaury & Julie": "Tendu",                       // Château de Mazières, Tendu (Indre)
-  "Mariage Amaury": "Tendu",                                // au cas où le titre soit raccourci
+  "Chantier Jeune Sainte Marguerite": { query: "Cannes", display: "Île Sainte-Marguerite" },
+  "Les Roches Summer Camp": { query: "Marbella", display: "Marbella" },
+  "Saint Jean Bruel": "Saint-Jean-du-Bruel",
+  "Mariage Amaury & Julie": { query: "Tendu", display: "Tendu (Indre)" },
+  "Mariage Amaury": { query: "Tendu", display: "Tendu (Indre)" },
+  "Vacance Famille Villedieu": { query: "Vaison-la-Romaine", display: "Villedieu (Vaucluse)" },
 };
+
+function getLocationOverride(sejour) {
+  if (!sejour.titre) return null;
+  const cleanedTitre = sejour.titre.replace(/\s*\?+\s*$/, "").trim();
+  const ov = LOCATION_OVERRIDES[cleanedTitre];
+  if (!ov) return null;
+  return typeof ov === "string" ? { query: ov, display: null } : ov;
+}
 
 // Extrait une query géocodable du séjour
 function extractLocationQuery(sejour) {
@@ -1211,9 +1221,9 @@ function extractLocationQuery(sejour) {
     return sejour.adresse;
   }
   if (sejour.titre) {
-    // Check overrides en premier (avec le titre nettoyé des ?)
-    const cleanedTitre = sejour.titre.replace(/\s*\?+\s*$/, "").trim();
-    if (LOCATION_OVERRIDES[cleanedTitre]) return LOCATION_OVERRIDES[cleanedTitre];
+    // Check overrides en premier
+    const ov = getLocationOverride(sejour);
+    if (ov) return ov.query;
 
     let q = sejour.titre;
     // Préfixes courants qui parasitent le géocodage (la VRAIE info est ce qui suit)
@@ -1259,7 +1269,9 @@ async function renderWeatherBlock(container, sejour) {
   if (!daily) { block.remove(); return; }
 
   block.innerHTML = "";
-  block.appendChild(el("div", { class: "weather-label" }, `Météo à ${geo.name} — 5 jours`));
+  const ov = getLocationOverride(sejour);
+  const displayName = (ov && ov.display) ? ov.display : geo.name;
+  block.appendChild(el("div", { class: "weather-label" }, `Météo à ${displayName} — 5 jours`));
   const strip = el("div", { class: "weather-strip" });
   for (let i = 0; i < daily.time.length; i++) {
     const d = parseDate(daily.time[i]);
