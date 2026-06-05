@@ -819,8 +819,9 @@ body.edit-mode .app { max-width: 100%; }
 body.print-mode {
   background: #6b6b71;
 }
-body.print-mode .app,
-body.print-mode #app {
+/* Force max-width none via class directe sur .app — plus fiable que sélecteur
+   ancêtre body.print-mode sur iOS PWA standalone. */
+.app.is-print {
   max-width: none !important;
   width: 100% !important;
   margin: 0 !important;
@@ -828,17 +829,19 @@ body.print-mode #app {
 }
 
 .print-toolbar {
-  /* Pas de sticky : sur iOS PWA standalone, sticky + flex column de
-     .print-page créait un artefact où la légende du footer s'affichait
-     à droite du toolbar. Relative est plus fiable. */
   position: relative;
-  z-index: 50;
+  z-index: 100;
+  isolation: isolate;
   background: var(--bg);
   padding: 12px 16px;
-  display: flex; align-items: center; gap: 12px;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  gap: 12px;
   border-bottom: 0.5px solid var(--separator);
-  width: 100%;
-  box-sizing: border-box;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden;
 }
 .print-toolbar-title {
   font-size: 14px; font-weight: 500;
@@ -1121,19 +1124,18 @@ body.print-mode #app {
 @media print {
   body.print-mode { background: white !important; }
   .print-toolbar, .print-hint, .search-fab { display: none !important; }
+  /* @page margin: 0 → la .print-page contrôle ses propres marges via padding
+     interne. Permet d'avoir des marges visuelles confortables ET de fonctionner
+     sur A4 (210×297) ET Letter (216×279) sans débordement. */
   @page {
     size: A4 portrait;
-    margin: 8mm;
+    margin: 0;
   }
   html, body {
     margin: 0 !important;
     padding: 0 !important;
     background: white !important;
   }
-  /* Laisse le contenu s'écouler dans la page papier (A4 OU Letter selon
-     iOS). Pas de hauteur fixe : le contenu est dimensionné pour tenir
-     dans la zone utile Letter (267mm), qui est plus petite qu'A4 (281mm).
-     Donc fonctionne sur les deux formats. */
   .print-page {
     margin: 0;
     box-shadow: none;
@@ -1141,32 +1143,38 @@ body.print-mode #app {
     height: auto;
     min-height: 0;
     max-height: none;
-    padding: 0;
-    overflow: visible;
-    display: block;  /* pas flex en print (mieux paginé) */
+    /* Padding interne = marges visuelles autour du contenu.
+       14mm gauche/droite donne du souffle desktop sans rogner le tableau. */
+    padding: 7mm 14mm 5mm;
+    box-sizing: border-box;
+    overflow: hidden;
+    display: block;
+    /* page-break-after: always force changement de page entre mois.
+       PAS de page-break-inside: avoid : crée des pages blanches si content
+       est ne serait-ce qu'au-dessus de la zone imprimable. */
     page-break-after: always;
-    page-break-inside: avoid;
     break-after: page;
-    break-inside: avoid;
+    /* Containment isolation pour empêcher le contenu de leak vers le toolbar. */
+    contain: layout style;
   }
   .print-page:last-of-type {
     page-break-after: auto;
     break-after: auto;
   }
-  /* Pas de flex sur .p-table en print, qu'elle prenne sa hauteur naturelle */
   .p-table { flex: none; }
-  /* Layout compact pour tenir sur Letter (267mm utile) :
-       header ~17 + table header ~10 + 31×7.1 = 220 + footer ~10 = ~257mm */
-  .p-header { margin-bottom: 2mm; }
+  /* Layout compact pour Letter (279mm - 12mm padding vertical = 267mm utile) :
+       header 14 + table header 10 + 31 × 6.8 = 211 + footer 9 = ~244mm
+       Buffer : 267 - 244 = 23mm de marge sécurité. */
+  .p-header { margin-bottom: 1.5mm; }
   .p-eyebrow { font-size: 9pt; }
-  .p-title { font-size: 20pt; margin-top: 0; }
-  .p-row, .p-row > .p-cell { height: 7.1mm; }
+  .p-title { font-size: 19pt; margin-top: 0; }
+  .p-row, .p-row > .p-cell { height: 6.8mm; }
   .p-th { padding: 2pt 1pt; }
-  .p-avatar, .p-avatar-fallback { width: 18pt; height: 18pt; }
+  .p-avatar, .p-avatar-fallback { width: 17pt; height: 17pt; }
   .p-th-name { font-size: 8pt; }
-  .p-footer { margin-top: 1.5mm; font-size: 7pt; }
-  .p-footer-url-line { margin-top: 0.8mm; font-size: 7pt; }
-  .p-footer-legend { gap: 8pt; font-size: 6.6pt; }
+  .p-footer { margin-top: 1mm; font-size: 7pt; }
+  .p-footer-url-line { margin-top: 0.5mm; font-size: 6.8pt; }
+  .p-footer-legend { gap: 7pt; font-size: 6.4pt; }
 }
 </style>
 </head>
@@ -1750,6 +1758,8 @@ function navTo(params) {
 
 function render() {
   document.body.classList.remove("print-mode");
+  const appEl = document.getElementById("app");
+  if (appEl) appEl.classList.remove("is-print");
   const r = getRoute();
   if (r.edit) renderEdit();
   else if (r.print) renderPrint();
@@ -2050,6 +2060,7 @@ function renderPrint() {
   document.body.classList.remove("edit-mode");
   document.body.classList.add("print-mode");
   const app = document.getElementById("app");
+  app.classList.add("is-print");  // classe directe sur .app pour bypass sélecteur ancêtre
   app.innerHTML = "";
 
   const toolbar = el("div", { class: "print-toolbar" },
