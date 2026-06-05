@@ -796,6 +796,112 @@ body.edit-mode .app { max-width: 100%; }
 .toast.error { background: rgba(207, 48, 48, 0.95); }
 
 /* ============================================================
+   WIDGET "AUJOURD'HUI" sur la home — qui est où aujourd'hui ?
+   ============================================================ */
+.today-widget {
+  background: var(--card);
+  border: 0.5px solid var(--card-border);
+  border-radius: 16px;
+  margin: 0 16px 18px;
+  padding: 14px 14px 16px;
+}
+.today-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  gap: 10px;
+}
+.today-eyebrow {
+  font-size: 12px;
+  color: var(--text-sec);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.today-date {
+  font-size: 17px;
+  font-weight: 600;
+  margin-top: 2px;
+  letter-spacing: -0.2px;
+  text-transform: capitalize;
+}
+.today-countdown {
+  text-align: right;
+  background: var(--accent-bg);
+  border-radius: 12px;
+  padding: 6px 12px;
+  color: var(--accent-text);
+  flex-shrink: 0;
+}
+.today-countdown-num {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+.today-countdown-lbl {
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+.today-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+}
+.today-cell {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+  padding: 4px 2px;
+  border-radius: 10px;
+  transition: background 0.12s;
+}
+.today-cell:active { background: var(--separator); }
+.today-avatar {
+  width: 40px; height: 40px;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.today-status {
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  min-height: 28px;
+}
+.today-status-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.today-status-sub {
+  font-size: 10px;
+  font-weight: 400;
+  opacity: 0.75;
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.today-st-routine .today-status-label {
+  color: var(--text-sec);
+  font-style: italic;
+  font-weight: 400;
+}
+.today-st-sejour .today-status-label { color: var(--text); }
+.today-st-sejour.is-tentatif .today-status-label::after { content: " ?"; color: var(--tentatif); }
+.today-st-trajet .today-status-label { color: var(--accent); }
+.today-st-none .today-status-label { color: var(--text-ter); }
+
+/* ============================================================
    PRINT VIEW (?print=1) — calendrier 3 pages pour grands-parents
    ============================================================ */
 .print-link-wrap {
@@ -1791,6 +1897,7 @@ function renderHome() {
   grid.appendChild(rowKids);
   screen.appendChild(grid);
   app.appendChild(screen);
+  app.appendChild(renderTodayWidget());
   app.appendChild(renderCalendar());
   app.appendChild(el("div", { class: "print-link-wrap" },
     el("a", {
@@ -1800,6 +1907,82 @@ function renderHome() {
     }, iconSpan("printer"), "Imprimer pour grands-parents")
   ));
   addSearchFab();
+}
+
+// === WIDGET "AUJOURD'HUI" sur la home ==========================================
+// Glance rapide : 5 avatars + leur statut du jour. Tap → programme.
+function getUserTodayStatus(userId, isoToday) {
+  // Avant/après la saison : tout le monde est en routine "À Dubai"
+  if (isoToday < DATA.meta.dateStart || isoToday > DATA.meta.dateEnd) {
+    return { kind: "routine", label: "À Dubai" };
+  }
+  const colIdx = USER_COL_IDX[userId];
+  const mmdd = isoToday.slice(5);
+  const row = DATA.d.find(r => r[0] === mmdd);
+  if (!row) return { kind: "none", label: "—" };
+  const act = row[colIdx];
+  if (!act) return { kind: "none", label: "—" };
+
+  if (isTrajet(act)) {
+    const note = (DATA.c || {})[`${isoToday}|${userId}`] || "";
+    const info = parseTrajetNote(note);
+    const route = getPrintTrajetRoute(act, info);
+    const time = info.heureDepart || "";
+    return { kind: "trajet", label: route, sub: time };
+  }
+  if (isRoutine(act)) {
+    return { kind: "routine", label: "À Dubai" };
+  }
+  // Séjour
+  const tentatif = isTentatif(act) || hasTBC(act);
+  const clean = stripTBC(cleanTitre(act));
+  const meta = lookupPrintLabel(clean);
+  return { kind: "sejour", label: meta.title, sub: meta.sub || "", tentatif };
+}
+
+const DOW_LONG_FR = ["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"];
+function renderTodayWidget() {
+  const isoToday = isoDay(TODAY);
+  const card = el("div", { class: "today-widget" });
+
+  const dowName = DOW_LONG_FR[TODAY.getDay()];
+  const monthName = MONTHS_LONG[TODAY.getMonth()];
+
+  const headerRow = el("div", { class: "today-header" });
+  headerRow.appendChild(el("div", null,
+    el("div", { class: "today-eyebrow" }, "Aujourd'hui"),
+    el("div", { class: "today-date" }, `${dowName} ${TODAY.getDate()} ${monthName}`)
+  ));
+
+  // Countdown si avant la saison
+  if (isoToday < DATA.meta.dateStart) {
+    const daysUntil = daysBetween(TODAY, parseDate(DATA.meta.dateStart));
+    headerRow.appendChild(el("div", { class: "today-countdown" },
+      el("div", { class: "today-countdown-num" }, String(daysUntil)),
+      el("div", { class: "today-countdown-lbl" }, daysUntil > 1 ? "jours" : "jour",
+        el("br"), "avant l'été")
+    ));
+  }
+  card.appendChild(headerRow);
+
+  const row = el("div", { class: "today-row" });
+  for (const u of DATA.users) {
+    const st = getUserTodayStatus(u.id, isoToday);
+    const cell = el("a", {
+      class: "today-cell",
+      href: `?user=${u.id}`,
+      onClick: (e) => { e.preventDefault(); navTo({ user: u.id }); }
+    });
+    cell.appendChild(avatarEl(u, "today-avatar"));
+    const status = el("div", { class: `today-status today-st-${st.kind}` + (st.tentatif ? " is-tentatif" : "") },
+      el("div", { class: "today-status-label" }, st.label),
+      st.sub ? el("div", { class: "today-status-sub" }, st.sub) : null
+    );
+    cell.appendChild(status);
+    row.appendChild(cell);
+  }
+  card.appendChild(row);
+  return card;
 }
 
 function addSearchFab() {
