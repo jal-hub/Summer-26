@@ -819,14 +819,26 @@ body.edit-mode .app { max-width: 100%; }
 body.print-mode {
   background: #6b6b71;
 }
-body.print-mode .app { max-width: none; }
+body.print-mode .app,
+body.print-mode #app {
+  max-width: none !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
 
 .print-toolbar {
-  position: sticky; top: 0; z-index: 50;
+  /* Pas de sticky : sur iOS PWA standalone, sticky + flex column de
+     .print-page créait un artefact où la légende du footer s'affichait
+     à droite du toolbar. Relative est plus fiable. */
+  position: relative;
+  z-index: 50;
   background: var(--bg);
   padding: 12px 16px;
   display: flex; align-items: center; gap: 12px;
   border-bottom: 0.5px solid var(--separator);
+  width: 100%;
+  box-sizing: border-box;
 }
 .print-toolbar-title {
   font-size: 14px; font-weight: 500;
@@ -1107,31 +1119,31 @@ body.print-mode .app { max-width: none; }
 }
 
 @media print {
-  body.print-mode { background: white; }
+  body.print-mode { background: white !important; }
   .print-toolbar, .print-hint, .search-fab { display: none !important; }
-  /* @page margin: 0 — la .print-page possède 100% de la page A4 et gère
-     elle-même ses propres padding. Évite les conflits @page vs Safari iOS. */
   @page {
     size: A4 portrait;
-    margin: 0;
+    margin: 8mm;
   }
   html, body {
     margin: 0 !important;
     padding: 0 !important;
     background: white !important;
   }
-  /* Verrouille chaque page à EXACTEMENT 210×297mm (A4 portrait) avec
-     box-sizing border-box. iOS Safari respecte ce dimensionnement et
-     met UNE .print-page par feuille physique. */
+  /* Laisse le contenu s'écouler dans la page papier (A4 OU Letter selon
+     iOS). Pas de hauteur fixe : le contenu est dimensionné pour tenir
+     dans la zone utile Letter (267mm), qui est plus petite qu'A4 (281mm).
+     Donc fonctionne sur les deux formats. */
   .print-page {
-    width: 210mm;
-    height: 297mm;
-    max-height: 297mm;
-    padding: 6mm 7mm 4mm;
-    box-sizing: border-box;
     margin: 0;
     box-shadow: none;
-    overflow: hidden;
+    width: auto;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    padding: 0;
+    overflow: visible;
+    display: block;  /* pas flex en print (mieux paginé) */
     page-break-after: always;
     page-break-inside: avoid;
     break-after: page;
@@ -1141,8 +1153,10 @@ body.print-mode .app { max-width: none; }
     page-break-after: auto;
     break-after: auto;
   }
-  /* Juillet = 31 jours : doit absolument tenir. Réduit la hauteur ligne
-     et le header pour print, garde la lisibilité écran intacte. */
+  /* Pas de flex sur .p-table en print, qu'elle prenne sa hauteur naturelle */
+  .p-table { flex: none; }
+  /* Layout compact pour tenir sur Letter (267mm utile) :
+       header ~17 + table header ~10 + 31×7.1 = 220 + footer ~10 = ~257mm */
   .p-header { margin-bottom: 2mm; }
   .p-eyebrow { font-size: 9pt; }
   .p-title { font-size: 20pt; margin-top: 0; }
