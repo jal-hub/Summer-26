@@ -864,10 +864,19 @@ body.edit-mode .app { max-width: 100%; }
   transition: background 0.12s;
 }
 .today-cell:active { background: var(--separator); }
-.today-avatar {
-  width: 40px; height: 40px;
-  font-size: 14px;
-  flex-shrink: 0;
+.today-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .today-status {
   width: 100%;
@@ -1973,7 +1982,7 @@ function renderTodayWidget() {
       href: `?user=${u.id}`,
       onClick: (e) => { e.preventDefault(); navTo({ user: u.id }); }
     });
-    cell.appendChild(avatarEl(u, "today-avatar"));
+    cell.appendChild(el("div", { class: `today-pill r-${u.ramp}` }, u.nom));
     const status = el("div", { class: `today-status today-st-${st.kind}` + (st.tentatif ? " is-tentatif" : "") },
       el("div", { class: "today-status-label" }, st.label),
       st.sub ? el("div", { class: "today-status-sub" }, st.sub) : null
