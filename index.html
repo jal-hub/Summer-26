@@ -73,7 +73,7 @@ body {
   display: flex; flex-direction: column;
   align-items: center;
   gap: 28px;
-  margin-bottom: 40px;
+  margin-bottom: 56px;  /* + screen padding-bottom 40 = ~96px d'air après l'intro */
 }
 .avatar-row { display: flex; justify-content: center; gap: 32px; }
 .avatar-cell {
@@ -834,7 +834,7 @@ body.edit-mode .app { max-width: 100%; }
   background: var(--card);
   border: 0.5px solid var(--card-border);
   border-radius: 16px;
-  margin: 0 16px 18px;
+  margin: 0 16px 26px;
   padding: 14px 14px 16px;
 }
 .today-header {
@@ -995,7 +995,7 @@ body.edit-mode .app { max-width: 100%; }
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 0 16px 18px;
+  padding: 0 16px 28px;
 }
 .home-link {
   display: inline-flex;
@@ -1918,11 +1918,15 @@ const LOCATION_OVERRIDES = {
   "Mariage Amaury & Julie": { query: "Tendu", display: "Tendu (Indre)" },
   "Mariage Amaury": { query: "Tendu", display: "Tendu (Indre)" },
   "Vacance Famille Villedieu": { query: "Vaison-la-Romaine", display: "Villedieu (Vaucluse)" },
-  // Géocoding spécifique : éviter Geneva/USA, La Plagne/n'importe-quoi, La Palmyre/inconnu
-  "Boulot Geneva": { query: "Genève, Suisse", display: "Genève" },
-  "La Plagne": { query: "La Plagne Tarentaise, Savoie", display: "La Plagne (Savoie)" },
-  "La Palmyre chez Paul": { query: "La Palmyre, Royan", display: "La Palmyre" },
-  "La Palmyre": { query: "La Palmyre, Royan", display: "La Palmyre" },
+  // Géocoding Open-Meteo : queries SIMPLES (pas de virgule, sinon l'API ne renvoie rien).
+  // - Genève seul → Suisse direct (sinon Geneva = Illinois USA)
+  // - Aime = commune qui contient la station La Plagne (la station elle-même n'est pas
+  //   indexée par Open-Meteo, mais Aime-la-Plagne l'est, à 45.55, 6.65)
+  // - La Palmyre seul → marche très bien (Charente-Maritime, près de Royan)
+  "Boulot Geneva":         { query: "Genève",     display: "Genève" },
+  "La Plagne":             { query: "Aime",       display: "Aime-la-Plagne (Savoie)" },
+  "La Palmyre chez Paul":  { query: "La Palmyre", display: "La Palmyre" },
+  "La Palmyre":            { query: "La Palmyre", display: "La Palmyre" },
 };
 
 function getLocationOverride(sejour) {
