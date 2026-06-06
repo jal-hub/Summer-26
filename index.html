@@ -2766,28 +2766,26 @@ async function downloadCalendarPdf(btn) {
 
     const filename = "Famille-Lecointre-Été-2026.pdf";
     const blob = pdf.output("blob");
-    const file = new File([blob], filename, { type: "application/pdf" });
-
-    // iOS/mobile : share sheet
-    if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
-      try {
-        await navigator.share({ files: [file], title: "Été 2026 — Famille Lecointre" });
-        setLabel("PDF");
-        return;
-      } catch (e) {
-        if (e.name === "AbortError") { setLabel("PDF"); return; }
-        // fallback below
-      }
-    }
-    // Desktop / fallback : download
     const url = URL.createObjectURL(blob);
+
+    // OUVRE le PDF dans une nouvelle fenêtre/onglet (au lieu de la share sheet
+    // qui sur macOS ne propose pas Print). L'utilisateur voit le PDF directement
+    // et peut :
+    //   - Desktop : Cmd+P pour imprimer, ou Save As / partager depuis le viewer
+    //   - iOS Safari : tap share → Print, AirDrop, Mail, etc.
+    // Anchor click avec target=_blank dans le onClick handler = autorisé par iOS.
     const a = document.createElement("a");
-    a.href = url; a.download = filename;
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    // download attribute donne un nom au fichier si l'utilisateur le sauve
+    a.download = filename;
+    a.style.display = "none";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-    showToast("PDF téléchargé");
+    // garder le blob URL valide ~1 minute pour laisser l'onglet le récupérer
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   } catch (e) {
     console.error("PDF error", e);
     showToast("Erreur génération PDF", true);
@@ -2821,7 +2819,7 @@ function renderPrint() {
   app.appendChild(toolbar);
 
   app.appendChild(el("div", { class: "print-hint" },
-    "Tape ", el("strong", null, "PDF"), " ci-dessus pour générer le calendrier 3 pages A4 landscape. Sur iPhone : la fenêtre de partage s'ouvre — AirDrop, Mail, ou Save to Files. Identique sur desktop et mobile."
+    "Tape ", el("strong", null, "PDF"), " — le calendrier 3 pages s'ouvre prêt à imprimer ou partager."
   ));
 
   PRINT_MONTHS.forEach((m, i) => {
