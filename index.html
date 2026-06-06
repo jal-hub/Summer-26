@@ -987,28 +987,34 @@ body.edit-mode .app { max-width: 100%; }
 }
 .print-link .icon { width: 16px; height: 16px; }
 
-/* Home links (Carte + Imprimer) */
+/* Home links (Carte + Impression) — côte à côte entre Aujourd'hui et calendrier */
 .home-links {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  justify-content: center;
   align-items: center;
-  gap: 10px;
-  padding: 24px 16px 32px;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 16px 18px;
 }
 .home-link {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  gap: 6px;
+  font-size: 13px;
   color: var(--text-sec);
   text-decoration: none;
-  padding: 10px 18px;
+  padding: 8px 14px;
   border: 0.5px solid var(--separator);
   border-radius: 999px;
   background: var(--card);
+  white-space: nowrap;
 }
-.home-link .icon { width: 16px; height: 16px; }
+.home-link .icon { width: 14px; height: 14px; }
 .home-link:active { opacity: 0.7; }
+@media (max-width: 380px) {
+  .home-link { font-size: 12px; padding: 7px 12px; }
+}
 
 /* ============================================================
    VUE MAP (?map=1) — Leaflet + OSM
@@ -1092,6 +1098,18 @@ body.map-mode { background: var(--bg); overflow: hidden; }
   margin-top: 3px;
   font-weight: 500;
 }
+.map-popup-link {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1a73e8;
+  text-decoration: none;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 0.5px solid rgba(0,0,0,0.1);
+  width: 100%;
+}
+.map-popup-link:hover { text-decoration: underline; }
 /* Légende flottante en bas du map */
 .map-legend {
   position: absolute;
@@ -1900,6 +1918,11 @@ const LOCATION_OVERRIDES = {
   "Mariage Amaury & Julie": { query: "Tendu", display: "Tendu (Indre)" },
   "Mariage Amaury": { query: "Tendu", display: "Tendu (Indre)" },
   "Vacance Famille Villedieu": { query: "Vaison-la-Romaine", display: "Villedieu (Vaucluse)" },
+  // Géocoding spécifique : éviter Geneva/USA, La Plagne/n'importe-quoi, La Palmyre/inconnu
+  "Boulot Geneva": { query: "Genève, Suisse", display: "Genève" },
+  "La Plagne": { query: "La Plagne Tarentaise, Savoie", display: "La Plagne (Savoie)" },
+  "La Palmyre chez Paul": { query: "La Palmyre, Royan", display: "La Palmyre" },
+  "La Palmyre": { query: "La Palmyre, Royan", display: "La Palmyre" },
 };
 
 function getLocationOverride(sejour) {
@@ -2106,7 +2129,6 @@ function renderHome() {
   screen.appendChild(grid);
   app.appendChild(screen);
   app.appendChild(renderTodayWidget());
-  app.appendChild(renderCalendar());
   app.appendChild(el("div", { class: "home-links" },
     el("a", {
       class: "home-link",
@@ -2117,8 +2139,9 @@ function renderHome() {
       class: "home-link",
       href: "?print=1",
       onClick: (e) => { e.preventDefault(); navTo({ print: 1 }); },
-    }, iconSpan("printer"), "Imprimer pour grands-parents")
+    }, iconSpan("printer"), "Impression Grands-Parents")
   ));
+  app.appendChild(renderCalendar());
   addSearchFab();
 }
 
@@ -2357,12 +2380,14 @@ async function renderMap() {
 
     const partsNames = sj.participants.map(p => userById(p)?.nom).filter(Boolean);
     const everyone = partsNames.length === DATA.users.length ? "Famille au complet" : partsNames.join(", ");
+    const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${geo.lat},${geo.lng}`;
     const popupHtml = `
       <div class="map-popup">
         <div class="map-popup-title">${esc(meta.title)}${tentatif ? ' <span style="color:#d09030">?</span>' : ''}</div>
         ${meta.sub ? `<div class="map-popup-sub">${esc(meta.sub)}</div>` : ''}
         <div class="map-popup-dates">${esc(fmtDateRange(sj.dateMin, sj.dateMax))}</div>
         <div class="map-popup-people">${esc(everyone)}</div>
+        <a class="map-popup-link" href="${gmapsUrl}" target="_blank" rel="noopener">Itinéraire Google Maps →</a>
       </div>
     `;
     const marker = L.marker([geo.lat, geo.lng], { icon }).addTo(map);
