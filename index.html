@@ -1466,22 +1466,24 @@ body.print-mode {
     padding: 0 !important;
     background: white !important;
   }
+  /* En landscape, A4 height (210mm) < Letter height (216mm).
+     Donc en forçant .print-page à EXACTEMENT 297×210mm + overflow hidden,
+     ça rentre parfaitement sur A4 ET laisse 6mm de marge sur Letter.
+     iOS Safari ne peut plus splitter une .print-page sur plusieurs feuilles. */
   .print-page {
     margin: 0;
     box-shadow: none;
-    width: auto;
-    height: auto;
-    min-height: 0;
-    max-height: none;
-    /* Landscape : padding horizontal modeste (12mm) car la largeur est de
-       297mm — déjà beaucoup d'air. Vertical compact car 210mm seulement. */
+    width: 297mm;
+    height: 210mm;
+    max-height: 210mm;
     padding: 5mm 12mm 4mm;
     box-sizing: border-box;
     overflow: hidden;
     display: block;
     page-break-after: always;
+    page-break-inside: avoid;
     break-after: page;
-    contain: layout style;
+    break-inside: avoid;
   }
   .print-page:last-of-type {
     page-break-after: auto;
