@@ -212,6 +212,38 @@ body {
 }
 .btn-maps .icon { width: 14px; height: 14px; }
 
+/* Actions trajet : Ajouter au calendrier + Suivre le vol */
+.trajet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  -webkit-appearance: none;
+}
+.btn-action .icon { width: 14px; height: 14px; }
+.btn-calendar {
+  background: var(--accent);
+  color: white;
+}
+.btn-track {
+  background: var(--separator);
+  color: var(--text);
+}
+.btn-action:active { opacity: 0.7; }
+
 .doc-pill {
   display: inline-flex; align-items: center; gap: 6px;
   font-size: 13px;
@@ -955,6 +987,146 @@ body.edit-mode .app { max-width: 100%; }
 }
 .print-link .icon { width: 16px; height: 16px; }
 
+/* Home links (Carte + Imprimer) */
+.home-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 16px 32px;
+}
+.home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-sec);
+  text-decoration: none;
+  padding: 10px 18px;
+  border: 0.5px solid var(--separator);
+  border-radius: 999px;
+  background: var(--card);
+}
+.home-link .icon { width: 16px; height: 16px; }
+.home-link:active { opacity: 0.7; }
+
+/* ============================================================
+   VUE MAP (?map=1) — Leaflet + OSM
+   ============================================================ */
+body.map-mode { background: var(--bg); overflow: hidden; }
+.app.is-map {
+  max-width: none !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100vh; height: 100dvh;
+  display: flex; flex-direction: column;
+}
+.map-toolbar {
+  position: relative;
+  z-index: 1000;
+  background: var(--bg);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 0.5px solid var(--separator);
+  flex-shrink: 0;
+}
+.map-toolbar-title {
+  font-size: 14px;
+  font-weight: 500;
+  flex: 1;
+  text-align: center;
+  color: var(--text);
+}
+#leaflet-map {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  position: relative;
+}
+.map-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-sec);
+  font-size: 14px;
+}
+.map-marker { background: none !important; border: none !important; }
+.map-pin {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 2.5px solid white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+}
+.map-pin.is-tentatif {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255,255,255,0.5) 0,
+    rgba(255,255,255,0.5) 1.5px,
+    transparent 1.5px,
+    transparent 4px
+  );
+}
+.map-popup { font-family: inherit; min-width: 170px; padding: 2px 0; }
+.map-popup-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #000;
+}
+.map-popup-sub {
+  font-size: 12px;
+  color: #555;
+  margin-top: 1px;
+}
+.map-popup-dates {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+.map-popup-people {
+  font-size: 12px;
+  color: #333;
+  margin-top: 3px;
+  font-weight: 500;
+}
+/* Légende flottante en bas du map */
+.map-legend {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999;
+  background: rgba(255,255,255,0.94);
+  border: 0.5px solid rgba(0,0,0,0.1);
+  border-radius: 999px;
+  padding: 6px 12px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 92vw;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  font-size: 11px;
+}
+@media (prefers-color-scheme: dark) {
+  .map-legend { background: rgba(28,28,30,0.94); color: #fff; }
+}
+.map-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.map-legend-sw {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.7);
+}
+
 body.print-mode {
   background: #6b6b71;
 }
@@ -1339,6 +1511,8 @@ const ICONS = {
   share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>',
   search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
   printer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>',
+  calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+  radar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><line x1="12" y1="3" x2="12" y2="6"/></svg>',
 };
 
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]); }
@@ -1884,7 +2058,7 @@ function openSearch() {
 
 function getRoute() {
   const p = new URLSearchParams(location.search);
-  return { edit: p.has("edit"), print: p.has("print"), user: p.get("user"), day: p.get("day") };
+  return { edit: p.has("edit"), print: p.has("print"), map: p.has("map"), user: p.get("user"), day: p.get("day") };
 }
 function navTo(params) {
   const url = new URL(location.href);
@@ -1896,12 +2070,13 @@ function navTo(params) {
 }
 
 function render() {
-  document.body.classList.remove("print-mode");
+  document.body.classList.remove("print-mode", "map-mode");
   const appEl = document.getElementById("app");
-  if (appEl) appEl.classList.remove("is-print");
+  if (appEl) appEl.classList.remove("is-print", "is-map");
   const r = getRoute();
   if (r.edit) renderEdit();
   else if (r.print) renderPrint();
+  else if (r.map) renderMap();
   else if (r.user) renderProgramme(r.user);
   else renderHome();
 }
@@ -1932,9 +2107,14 @@ function renderHome() {
   app.appendChild(screen);
   app.appendChild(renderTodayWidget());
   app.appendChild(renderCalendar());
-  app.appendChild(el("div", { class: "print-link-wrap" },
+  app.appendChild(el("div", { class: "home-links" },
     el("a", {
-      class: "print-link",
+      class: "home-link",
+      href: "?map=1",
+      onClick: (e) => { e.preventDefault(); navTo({ map: 1 }); },
+    }, iconSpan("mappin"), "Carte de l'été"),
+    el("a", {
+      class: "home-link",
       href: "?print=1",
       onClick: (e) => { e.preventDefault(); navTo({ print: 1 }); },
     }, iconSpan("printer"), "Imprimer pour grands-parents")
@@ -2026,10 +2206,186 @@ function renderTodayWidget() {
   return card;
 }
 
+// === VUE MAP (?map=1) ==========================================================
+// Leaflet + OpenStreetMap. Marqueurs séjours color-codés par groupe activité.
+// Réutilise le cache geocoding de l'API météo (Open-Meteo).
+const MAP_GROUP_COLORS = {
+  atlantique: "#3b7dd8",
+  med:        "#e08220",
+  montagne:   "#5fa835",
+  etranger:   "#6a5fc8",
+  evenement:  "#8e8e93",
+};
+
+function loadLeaflet() {
+  return new Promise((resolve, reject) => {
+    if (window.L) return resolve();
+    if (!document.querySelector('link[data-leaflet]')) {
+      const css = document.createElement("link");
+      css.rel = "stylesheet";
+      css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      css.setAttribute("data-leaflet", "1");
+      document.head.appendChild(css);
+    }
+    if (document.querySelector('script[data-leaflet]')) {
+      // Already loading
+      const existing = document.querySelector('script[data-leaflet]');
+      existing.addEventListener("load", resolve);
+      existing.addEventListener("error", reject);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    script.setAttribute("data-leaflet", "1");
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+// Agrège séjours uniques sur tous les users → un point par lieu, avec dates min/max
+// et liste des participants.
+function collectMapSejours() {
+  const out = new Map();
+  for (const u of DATA.users) {
+    for (const s of computeStretches(u.id)) {
+      if (!s.clean) continue;
+      const existing = out.get(s.clean);
+      if (existing) {
+        if (!existing.participants.includes(u.id)) existing.participants.push(u.id);
+        if (s.start < existing.dateMin) existing.dateMin = s.start;
+        if (s.end > existing.dateMax) existing.dateMax = s.end;
+        if (s.tentatif === false) existing.tentatif = false;  // au moins un user confirmé
+      } else {
+        out.set(s.clean, {
+          titre: s.clean,
+          participants: [u.id],
+          dateMin: s.start,
+          dateMax: s.end,
+          tentatif: s.tentatif,
+        });
+      }
+    }
+  }
+  return Array.from(out.values());
+}
+
+async function renderMap() {
+  document.body.classList.remove("edit-mode", "print-mode");
+  document.body.classList.add("map-mode");
+  const app = document.getElementById("app");
+  app.classList.add("is-map");
+  app.innerHTML = "";
+
+  // Toolbar
+  const toolbar = el("div", { class: "map-toolbar" },
+    el("a", {
+      class: "back-btn", href: "?",
+      onClick: (e) => { e.preventDefault(); navTo({}); }
+    }, iconSpan("back"), "Retour"),
+    el("div", { class: "map-toolbar-title" }, "Carte de l'été")
+  );
+  app.appendChild(toolbar);
+
+  const mapEl = el("div", { id: "leaflet-map" });
+  app.appendChild(mapEl);
+
+  // Legend overlay
+  const legend = el("div", { class: "map-legend" });
+  for (const [key, label] of Object.entries({
+    atlantique: "Sud Ouest",
+    med:        "Sud/Méd.",
+    montagne:   "Montagne",
+    etranger:   "Étranger",
+    evenement:  "Événement"
+  })) {
+    legend.appendChild(el("span", { class: "map-legend-item" },
+      el("span", { class: `map-legend-sw g-${key}`, style: { background: MAP_GROUP_COLORS[key] } }),
+      " " + label
+    ));
+  }
+  app.appendChild(legend);
+
+  // Loading
+  mapEl.innerHTML = '<div class="map-loading">Chargement de la carte…</div>';
+
+  // No search FAB on map
+  document.querySelectorAll(".search-fab").forEach(e => e.remove());
+
+  try {
+    await loadLeaflet();
+  } catch (e) {
+    mapEl.innerHTML = '<div class="map-loading">Carte indisponible (réseau ?)</div>';
+    return;
+  }
+
+  mapEl.innerHTML = "";
+  // Centrage initial : France centrée, zoom 5 (Europe visible)
+  const map = L.map("leaflet-map", { zoomControl: true, attributionControl: false })
+    .setView([46.5, 4.5], 5);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    attribution: '© OSM',
+  }).addTo(map);
+  L.control.attribution({ position: "bottomright", prefix: false }).addAttribution("© OpenStreetMap").addTo(map);
+
+  // Geocode + ajout des marqueurs en parallèle (cache localStorage par l'API météo).
+  const sejours = collectMapSejours();
+  const results = await Promise.all(sejours.map(async sj => {
+    const query = extractLocationQuery({ titre: sj.titre });
+    if (!query) return null;
+    const geo = await geocode(query);
+    return geo ? { sj, geo } : null;
+  }));
+
+  const validMarkers = [];
+  for (const r of results) {
+    if (!r) continue;
+    const { sj, geo } = r;
+    const group = getActivityGroup(sj.titre);
+    const color = MAP_GROUP_COLORS[group] || "#888";
+    const meta = lookupPrintLabel(sj.titre);
+    const tentatif = sj.tentatif;
+
+    const icon = L.divIcon({
+      className: "map-marker",
+      html: `<div class="map-pin${tentatif ? ' is-tentatif' : ''}" style="background:${color}"></div>`,
+      iconSize: [22, 22],
+      iconAnchor: [11, 11],
+      popupAnchor: [0, -10],
+    });
+
+    const partsNames = sj.participants.map(p => userById(p)?.nom).filter(Boolean);
+    const everyone = partsNames.length === DATA.users.length ? "Famille au complet" : partsNames.join(", ");
+    const popupHtml = `
+      <div class="map-popup">
+        <div class="map-popup-title">${esc(meta.title)}${tentatif ? ' <span style="color:#d09030">?</span>' : ''}</div>
+        ${meta.sub ? `<div class="map-popup-sub">${esc(meta.sub)}</div>` : ''}
+        <div class="map-popup-dates">${esc(fmtDateRange(sj.dateMin, sj.dateMax))}</div>
+        <div class="map-popup-people">${esc(everyone)}</div>
+      </div>
+    `;
+    const marker = L.marker([geo.lat, geo.lng], { icon }).addTo(map);
+    marker.bindPopup(popupHtml);
+    validMarkers.push(marker);
+  }
+
+  if (validMarkers.length === 0) {
+    mapEl.innerHTML = '<div class="map-loading">Aucun lieu géocodé</div>';
+    return;
+  }
+  if (validMarkers.length > 1) {
+    const grp = L.featureGroup(validMarkers);
+    map.fitBounds(grp.getBounds().pad(0.2));
+  } else {
+    map.setView(validMarkers[0].getLatLng(), 8);
+  }
+}
+
 function addSearchFab() {
   document.querySelectorAll(".search-fab").forEach(e => e.remove());
   const r = getRoute();
-  if (r.print || r.edit) return;  // no FAB in print/edit
+  if (r.print || r.edit || r.map) return;  // no FAB in print/edit/map
   const variant = r.user ? "is-programme" : "is-home";
   const fab = el("button", { class: "search-fab " + variant, type: "button", title: "Rechercher", onClick: openSearch }, iconSpan("search"));
   document.body.appendChild(fab);
@@ -2470,6 +2826,125 @@ function renderCard(item, userId, isPast) {
   return card;
 }
 
+// === iCal (.ics) generation pour trajets ========================================
+// Génère un événement RFC 5545 avec rappels VALARM. iOS Calendar gère ensuite
+// les notifs natives (1 jour avant + 2h avant).
+function icsPad(n) { return String(n).padStart(2, "0"); }
+function icsEscape(s) {
+  return String(s == null ? "" : s)
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\n/g, "\\n");
+}
+function icsLocalDateTime(isoDate, hhmm) {
+  // "2026-06-28" + "08:00" → "20260628T080000" (floating local time)
+  return isoDate.replace(/-/g, "") + "T" + hhmm.replace(":", "") + "00";
+}
+function icsAllDayDate(isoDate) {
+  return isoDate.replace(/-/g, "");
+}
+function icsAddMinutesToHHMM(hhmm, minutes) {
+  const [h, m] = hhmm.split(":").map(Number);
+  let total = h * 60 + m + minutes;
+  total = ((total % 1440) + 1440) % 1440;
+  return icsPad(Math.floor(total / 60)) + ":" + icsPad(total % 60);
+}
+function icsFoldLines(lines) {
+  // RFC 5545 : lignes max 75 chars (octets en théorie, on s'en tient à chars).
+  // Lignes plus longues = fold avec CRLF + espace au début.
+  const out = [];
+  for (const line of lines) {
+    if (line.length <= 75) { out.push(line); continue; }
+    out.push(line.slice(0, 75));
+    let rest = line.slice(75);
+    while (rest.length > 74) { out.push(" " + rest.slice(0, 74)); rest = rest.slice(74); }
+    if (rest.length) out.push(" " + rest);
+  }
+  return out;
+}
+function buildTrajetIcs(item, userId) {
+  const o = item.obj;
+  const now = new Date();
+  const dtstamp = `${now.getUTCFullYear()}${icsPad(now.getUTCMonth()+1)}${icsPad(now.getUTCDate())}T${icsPad(now.getUTCHours())}${icsPad(now.getUTCMinutes())}${icsPad(now.getUTCSeconds())}Z`;
+  const uidBase = `${item.date}-${userId}-${(o.vol || o.titre || "trajet").replace(/[^A-Za-z0-9]/g, "")}`;
+  const uid = `${uidBase}@lecointre-summer-2026`;
+  const emoji = ({vol:"✈️", train:"🚆", voiture:"🚗"})[o.type] || "↔️";
+  const title = `${emoji} ${o.titre}`;
+
+  const descParts = [];
+  if (o.vol) descParts.push(`Vol : ${o.vol}`);
+  if (o.compagnie) descParts.push(`Compagnie : ${o.compagnie}`);
+  if (o.origine) descParts.push(`Départ : ${o.origine}` + (o.heureDepart ? ` à ${o.heureDepart}` : ""));
+  if (o.destination) descParts.push(`Arrivée : ${o.destination}` + (o.heureArrivee ? ` à ${o.heureArrivee}` : ""));
+  if (o.reference) descParts.push(`Référence : ${o.reference}`);
+  if (o.notes) {
+    const cleanInfo = parseTrajetNote(o.notes);
+    const clean = (cleanInfo.cleanNote || "").trim();
+    if (clean) descParts.push("\n" + clean);
+  }
+
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Famille Lecointre//Summer 2026//FR",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `UID:${uid}`,
+    `DTSTAMP:${dtstamp}`,
+  ];
+
+  if (o.heureDepart) {
+    lines.push(`DTSTART:${icsLocalDateTime(item.date, o.heureDepart)}`);
+    const endHHMM = o.heureArrivee || icsAddMinutesToHHMM(o.heureDepart, 120);
+    lines.push(`DTEND:${icsLocalDateTime(item.date, endHHMM)}`);
+  } else {
+    // Toute la journée (rare cas où on n'a pas d'heure)
+    lines.push(`DTSTART;VALUE=DATE:${icsAllDayDate(item.date)}`);
+    lines.push(`DTEND;VALUE=DATE:${icsAllDayDate(shiftDate(item.date, 1))}`);
+  }
+
+  lines.push(`SUMMARY:${icsEscape(title)}`);
+  if (o.origine) lines.push(`LOCATION:${icsEscape(o.origine)}`);
+  if (descParts.length) lines.push(`DESCRIPTION:${icsEscape(descParts.join("\n"))}`);
+
+  // Rappels : 1 jour avant à 18h (visible dans la routine du soir) + 2h avant
+  lines.push("BEGIN:VALARM", "TRIGGER:-P1D", "ACTION:DISPLAY", "DESCRIPTION:Trajet demain", "END:VALARM");
+  lines.push("BEGIN:VALARM", "TRIGGER:-PT2H", "ACTION:DISPLAY", "DESCRIPTION:Trajet dans 2 heures", "END:VALARM");
+  lines.push("END:VEVENT", "END:VCALENDAR");
+
+  return icsFoldLines(lines).join("\r\n") + "\r\n";
+}
+
+async function addTrajetToCalendar(item, userId) {
+  const ics = buildTrajetIcs(item, userId);
+  const fnameBase = (item.obj.vol || item.obj.titre || "trajet").replace(/[^A-Za-z0-9]+/g, "_");
+  const filename = `${item.date}_${fnameBase}.ics`;
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const file = new File([blob], filename, { type: "text/calendar" });
+
+  // iOS Safari : Web Share avec File → ouvre la sheet "Ajouter au calendrier"
+  if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+    try {
+      await navigator.share({ files: [file], title: "Ajouter au calendrier" });
+      return;
+    } catch (e) {
+      if (e.name === "AbortError") return;  // user cancelled
+      // fallback below
+    }
+  }
+  // Fallback desktop : download direct → user double-clique le .ics → Calendar
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  showToast("Calendrier téléchargé — ouvre-le pour l'ajouter");
+}
+
 function buildExpand(container, item, userId) {
   const o = item.obj;
   const isSejour = item.kind === "sejour";
@@ -2506,6 +2981,31 @@ function buildExpand(container, item, userId) {
     if (infoParts.length) {
       container.appendChild(el("div", { class: "trajet-info" }, infoParts.join(" · ")));
     }
+    // Actions trajet : Ajouter au calendrier + Suivre le vol (si vol et num connu)
+    const actionsRow = el("div", { class: "trajet-actions" });
+    const calBtn = el("button", {
+      class: "btn-action btn-calendar",
+      type: "button",
+    }, iconSpan("calendar"), el("span", null, "Ajouter au calendrier"));
+    calBtn.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      addTrajetToCalendar(item, userId);
+    });
+    actionsRow.appendChild(calBtn);
+
+    // FlightAware : uniquement si type vol ET numéro de vol connu
+    if (o.type === "vol" && o.vol) {
+      const fanum = o.vol.replace(/\s+/g, "").toUpperCase();
+      const faUrl = `https://www.flightaware.com/live/flight/${encodeURIComponent(fanum)}`;
+      const trackBtn = el("a", {
+        class: "btn-action btn-track",
+        href: faUrl, target: "_blank", rel: "noopener",
+      }, iconSpan("radar"), el("span", null, "Suivre le vol"));
+      trackBtn.addEventListener("click", (e) => { e.stopPropagation(); });
+      actionsRow.appendChild(trackBtn);
+    }
+    container.appendChild(actionsRow);
+
     if (o.notes && o.notes.trim()) container.appendChild(blockFieldLinkified("Notes", o.notes));
   }
 
