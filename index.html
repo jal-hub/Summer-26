@@ -297,25 +297,6 @@ body {
   background: white;
   min-height: 0;
 }
-.doc-overlay-fallback {
-  padding: 12px 16px max(env(safe-area-inset-bottom, 12px), 12px);
-  background: var(--card);
-  border-top: 0.5px solid var(--separator);
-  text-align: center;
-  font-size: 13px;
-  color: var(--text-sec);
-}
-.doc-overlay-fallback-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  margin-top: 6px;
-  padding: 8px 16px;
-  background: var(--accent);
-  color: white;
-  text-decoration: none;
-  border-radius: 999px;
-  font-size: 14px; font-weight: 500;
-}
-.doc-overlay-fallback-btn .icon { width: 16px; height: 16px; }
 
 .contact-row { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text); }
 .contact-row .icon { width: 13px; height: 13px; color: var(--text-sec); }
@@ -3437,35 +3418,53 @@ function openPdfOverlay(url, label) {
   }, iconSpan("back"), "Retour"));
   bar.appendChild(el("div", { class: "doc-overlay-label" }, label || "Document"));
 
-  // Bouton Partager : ouvre la share sheet iOS avec l'URL du PDF
+  // Bouton Partager : fetch le PDF en blob et l'envoie comme FICHIER via la share
+  // sheet iOS (AirDrop / Mail / WhatsApp reçoivent le PDF directement, pas juste
+  // un lien). Fallback URL si la share API ne supporte pas les files.
   const shareBtn = el("button", { class: "doc-overlay-extern", type: "button" }, iconSpan("share"));
   shareBtn.addEventListener("click", async () => {
+    // Extrait le nom de fichier depuis l'URL (decode URI)
+    let filename = "document.pdf";
+    try {
+      const pathname = new URL(url, location.href).pathname;
+      const last = decodeURIComponent(pathname.split("/").pop() || "");
+      if (last && last.toLowerCase().endsWith(".pdf")) filename = last;
+    } catch (e) { /* ignore */ }
+    // Essai 1 : share du FICHIER (idéal)
+    try {
+      const resp = await fetch(url);
+      if (resp.ok) {
+        const blob = await resp.blob();
+        const file = new File([blob], filename, { type: "application/pdf" });
+        if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+          try {
+            await navigator.share({ files: [file], title: label || "PDF" });
+            return;
+          } catch (e) {
+            if (e.name === "AbortError") return;
+          }
+        }
+      }
+    } catch (e) { /* fallback below */ }
+    // Essai 2 : share de l'URL (dégradé)
     if (navigator.share) {
-      try { await navigator.share({ url, title: label || "PDF" }); }
-      catch (e) { if (e.name !== "AbortError") window.open(url, "_blank", "noopener"); }
-    } else {
-      window.open(url, "_blank", "noopener");
+      try {
+        await navigator.share({ url, title: label || "PDF" });
+        return;
+      } catch (e) { if (e.name === "AbortError") return; }
     }
+    // Essai 3 : ouvre dans nouvel onglet
+    window.open(url, "_blank", "noopener");
   });
   bar.appendChild(shareBtn);
   overlay.appendChild(bar);
 
   // PDF rendu via <embed> (meilleur que iframe sur iOS pour PDFs : pagination,
-  // scroll, zoom natif). Si iOS ne peut pas le rendre du tout, on a un fallback
-  // bouton "Ouvrir dans Safari" qui force la navigation.
+  // scroll, zoom natif).
   const viewer = el("embed", {
     src: url, type: "application/pdf", title: label || "PDF"
   });
   overlay.appendChild(viewer);
-  // Fallback : message + bouton en bas si iOS PWA refuse de rendre
-  const fallback = el("div", { class: "doc-overlay-fallback" },
-    el("div", null, "Si le PDF ne s'affiche pas correctement :"),
-    el("a", {
-      class: "doc-overlay-fallback-btn",
-      href: url, target: "_blank", rel: "noopener",
-    }, iconSpan("doc"), " Ouvrir en plein écran")
-  );
-  overlay.appendChild(fallback);
 
   document.body.appendChild(overlay);
   requestAnimationFrame(() => overlay.classList.add("show"));
