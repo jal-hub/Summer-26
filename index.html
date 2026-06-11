@@ -166,11 +166,13 @@ body {
 /* NEXT banner */
 .next-card {
   margin: 14px 16px 14px;
-  background: var(--accent-bg);
-  border: 0.5px solid var(--accent);
+  background: rgba(255,255,255,0.88);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0,122,255,0.45);
   border-radius: 16px;
   padding: 12px 14px;
-  color: var(--accent-text);
+  color: #0a3a72;
 }
 .next-eyebrow { font-size: 12px; font-weight: 500; opacity: 0.85; }
 .next-title { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 600; margin-top: 3px; }
@@ -347,16 +349,19 @@ body {
 .context-band {
   margin: 8px 16px;
   padding: 10px 14px;
-  background: var(--separator);
+  background: rgba(255,255,255,0.7);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 0.5px solid rgba(255,255,255,0.6);
   border-radius: 12px;
-  color: var(--text-sec);
+  color: #5a6b73;
   font-size: 13px;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 .context-band .icon { width: 14px; height: 14px; }
-.context-band-label { font-weight: 500; color: var(--text); }
+.context-band-label { font-weight: 600; color: #0a3a52; }
 
 /* Search */
 .search-fab {
@@ -2202,9 +2207,9 @@ function renderHome() {
 // === WIDGET "AUJOURD'HUI" sur la home ==========================================
 // Glance rapide : 5 avatars + leur statut du jour. Tap → programme.
 function getUserTodayStatus(userId, isoToday) {
-  // Avant/après la saison : tout le monde est en routine "À Dubai"
+  // Avant/après la saison : tout le monde est en routine "Dubai"
   if (isoToday < DATA.meta.dateStart || isoToday > DATA.meta.dateEnd) {
-    return { kind: "routine", label: "🏠 À Dubai" };
+    return { kind: "routine", label: "🏠 Dubai" };
   }
   const colIdx = USER_COL_IDX[userId];
   const mmdd = isoToday.slice(5);
@@ -2223,20 +2228,24 @@ function getUserTodayStatus(userId, isoToday) {
     const dest = parts[parts.length - 1] || "";
     const time = info.heureArrivee || info.heureDepart || "";
     const sub = `→ ${dest}` + (time ? ` · ${time}` : "");
-    return { kind: "trajet", label: "✈️ En voyage", sub };
+    const emoji = getTrajetEmoji(trajetType(act, info));
+    return { kind: "trajet", label: `En voyage ${emoji}`, sub };
   }
   if (isRoutine(act)) {
-    return { kind: "routine", label: "🏠 À Dubai" };
+    // Boulot Dubai/Geneva → 💼, sinon maison Dubai → 🏠
+    const clean = cleanTitre(act);
+    if (clean.toLowerCase().startsWith("boulot")) return { kind: "routine", label: "💼 Boulot" };
+    return { kind: "routine", label: "🏠 Dubai" };
   }
   // Séjour : "À <lieu>" pour les lieux, juste le nom pour les événements
-  // (À Mariage / À Chantier sonnent bizarres en français). Émoji du groupe en préfixe.
+  // (À Mariage / À Chantier sonnent bizarres en français). Émoji à la FIN.
   const tentatif = isTentatif(act) || hasTBC(act);
   const clean = stripTBC(cleanTitre(act));
   const meta = lookupPrintLabel(clean);
   const NO_A_PREFIX = new Set(["Chantier", "Mariage A&J"]);
   const base = NO_A_PREFIX.has(meta.title) ? meta.title : `À ${meta.title}`;
-  const emoji = getGroupEmoji(clean);
-  const label = emoji ? `${emoji} ${base}` : base;
+  const emoji = getSejourEmoji(clean);
+  const label = emoji ? `${base} ${emoji}` : base;
   return { kind: "sejour", label, sub: meta.sub || "", tentatif };
 }
 
@@ -2563,6 +2572,20 @@ const GROUP_EMOJI = {
   evenement:  "🎉",
 };
 function getGroupEmoji(titre) { return GROUP_EMOJI[getActivityGroup(titre)] || ""; }
+
+// Émoji d'un séjour avec cas spéciaux :
+//  - "Boulot ..." → 💼 (travail, pas vacances)
+//  - "Lyon ..."   → 🕯️ (Fête des Lumières, 8 décembre)
+//  - sinon → émoji du groupe géographique
+function getSejourEmoji(titre) {
+  const t = (titre || "").toLowerCase();
+  if (t.startsWith("boulot")) return "💼";
+  if (t.startsWith("lyon")) return "🕯️";
+  return getGroupEmoji(titre);
+}
+// Émoji d'un trajet selon le mode de transport
+const TRAJET_EMOJI = { vol: "✈️", train: "🚆", voiture: "🚗" };
+function getTrajetEmoji(type) { return TRAJET_EMOJI[type] || "🚗"; }
 
 function getIataFromInfo(info) {
   const oc = info.origine ? (info.origine.match(/\(([A-Z]{3})\)/) || [])[1] : "";
@@ -2961,9 +2984,11 @@ function renderBanner(label, item) {
   const meta = item.kind === "sejour"
     ? `${fmtDateRange(o.dateStart, o.dateEnd)} · ${nightsFromRange(o.dateStart, o.dateEnd)} nuits`
     : `${fmtDateSingle(o.date)}${o.heureDepart ? ` · ${o.heureDepart} → ${o.heureArrivee || ''}` : ''}`;
+  const nextEmoji = item.kind === "sejour" ? getSejourEmoji(o.titre) : getTrajetEmoji(o.type);
+  const nextTitle = nextEmoji ? `${o.titre} ${nextEmoji}` : o.titre;
   return el("div", { class: "next-card" },
     el("div", { class: "next-eyebrow" }, label),
-    el("div", { class: "next-title" }, iconSpan(ic), el("span", null, o.titre)),
+    el("div", { class: "next-title" }, iconSpan(ic), el("span", null, nextTitle)),
     el("div", { class: "next-meta" }, meta),
   );
 }
@@ -2978,9 +3003,9 @@ function renderCard(item, userId, isPast) {
   card.dataset.start = item.date;
   card.dataset.end = item.dateEnd;
 
-  // Émoji du groupe en préfixe pour les séjours (cohérent avec la map).
-  const sejourEmoji = isSejour ? getGroupEmoji(o.titre) : "";
-  const titleText = sejourEmoji ? `${sejourEmoji} ${o.titre}` : o.titre;
+  // Émoji à la FIN du titre : séjour → groupe (☀️🏖️⛰️…), trajet → mode (✈️🚆🚗).
+  const endEmoji = isSejour ? getSejourEmoji(o.titre) : getTrajetEmoji(o.type);
+  const titleText = endEmoji ? `${o.titre} ${endEmoji}` : o.titre;
   const titleEl = el("span", { class: "card-title" }, titleText);
   if (isSejour && o.tentatif) titleEl.appendChild(el("span", { class: "tentatif-badge" }, "à confirmer"));
   const shareIconBtn = el("button", { class: "card-share-icon", type: "button", title: "Partager" }, iconSpan("share"));
