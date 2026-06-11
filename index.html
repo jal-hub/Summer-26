@@ -364,6 +364,9 @@ body {
 }
 .context-band .icon { width: 14px; height: 14px; }
 .context-band-label { font-weight: 600; color: #0a3a52; }
+/* Bande de fin (après les cartes) : remonte pour coller à la dernière carte
+   (la div .cards a 32px de padding-bottom qui creusait l'écart). */
+.context-band.is-end { margin-top: -22px; margin-bottom: 28px; }
 
 /* Search */
 .search-fab {
@@ -2380,7 +2383,8 @@ async function renderMap() {
   const mapEl = el("div", { id: "leaflet-map" });
   app.appendChild(mapEl);
 
-  // Legend overlay (avec émojis estivaux)
+  // Legend overlay : pastilles de couleur (pas d'émoji — les points colorés
+  // sur la carte suffisent, et les émojis feraient doublon visuel).
   const legend = el("div", { class: "map-legend" });
   for (const [key, label] of Object.entries({
     atlantique: "Sud Ouest",
@@ -2390,7 +2394,8 @@ async function renderMap() {
     evenement:  "Événement"
   })) {
     legend.appendChild(el("span", { class: "map-legend-item" },
-      (GROUP_EMOJI[key] || "") + " " + label
+      el("span", { class: "map-legend-sw", style: { background: MAP_GROUP_COLORS[key] } }),
+      " " + label
     ));
   }
   app.appendChild(legend);
@@ -2971,7 +2976,7 @@ function renderProgramme(userId) {
 
   if (lastIso < DATA.meta.dateEnd) {
     const startIso = shiftDate(lastIso, 1);
-    app.appendChild(el("div", { class: "context-band" },
+    app.appendChild(el("div", { class: "context-band is-end" },
       iconSpan("home"),
       el("span", null,
         el("span", { class: "context-band-label" }, "À Dubai "),
