@@ -158,8 +158,10 @@ body {
 .user-switch .avatar {
   width: 30px; height: 30px; font-size: 12px; font-weight: 600;
   opacity: 0.6; transition: opacity 0.2s, transform 0.2s;
+  border: 2px solid rgba(255,255,255,0.92);
+  box-shadow: 0 1px 4px rgba(10,58,82,0.12);
 }
-.user-switch .avatar.is-current { width: 36px; height: 36px; font-size: 13px; opacity: 1; }
+.user-switch .avatar.is-current { width: 36px; height: 36px; font-size: 13px; opacity: 1; border-width: 2.5px; }
 .prog-eyebrow { font-size: 13px; color: var(--text-sec); margin-top: 14px; }
 .prog-title { font-size: 28px; font-weight: 600; letter-spacing: -0.4px; margin-top: 2px; margin-bottom: 4px; }
 
@@ -2580,7 +2582,7 @@ function getGroupEmoji(titre) { return GROUP_EMOJI[getActivityGroup(titre)] || "
 function getSejourEmoji(titre) {
   const t = (titre || "").toLowerCase();
   if (t.startsWith("boulot")) return "💼";
-  if (t.startsWith("lyon")) return "🕯️";
+  if (t.startsWith("lyon")) return "🦁";  // jeu de mots Lyon → lion
   return getGroupEmoji(titre);
 }
 // Émoji d'un trajet selon le mode de transport
