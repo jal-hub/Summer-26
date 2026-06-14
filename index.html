@@ -476,13 +476,9 @@ body {
 .weather-day { font-size: 11px; color: var(--text-sec); font-weight: 500; }
 .weather-icon { font-size: 22px; line-height: 1; }
 .weather-temp { font-size: 14px; font-weight: 500; color: var(--text); }
-.weather-hint { font-size: 12px; color: var(--text-ter); font-style: italic; }
 .weather-loading { font-size: 12px; color: var(--text-sec); }
 
 .empty-state { padding: 60px 24px; text-align: center; color: var(--text-sec); }
-.edit-screen { padding: 40px 24px; text-align: center; color: var(--text-sec); }
-.edit-screen h1 { font-size: 22px; color: var(--text); margin-bottom: 16px; }
-.edit-screen a { color: var(--accent); text-decoration: none; }
 
 /* Calendrier famille (home) */
 .cal-eyebrow {
@@ -992,23 +988,6 @@ body.edit-mode .app { max-width: 100%; }
 /* ============================================================
    PRINT VIEW (?print=1) — calendrier 3 pages pour grands-parents
    ============================================================ */
-.print-link-wrap {
-  text-align: center;
-  padding: 24px 16px 32px;
-}
-.print-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: var(--text-sec);
-  text-decoration: none;
-  padding: 10px 18px;
-  border: 0.5px solid var(--separator);
-  border-radius: 999px;
-  background: var(--card);
-}
-.print-link .icon { width: 16px; height: 16px; }
 
 /* Home links (Carte + Impression) — côte à côte entre Aujourd'hui et calendrier */
 .home-links {
@@ -1641,7 +1620,7 @@ function userById(id) { return DATA.users.find(u => u.id === id); }
 function avatarEl(u, extraClass) {
   const cls = `avatar r-${u.ramp}` + (u.photo ? " has-photo" : "") + (extraClass ? " " + extraClass : "");
   if (u.photo) return el("div", { class: cls }, el("img", { src: u.photo, alt: u.nom }));
-  return el("div", { class: cls }, u.initials || u.nom[0]);
+  return el("div", { class: cls }, u.initials || (u.nom || "?")[0]);
 }
 function trajetIcon(type) { return ({vol:"plane",train:"train",voiture:"car"})[type] || "transfert"; }
 
@@ -2165,7 +2144,7 @@ function render() {
   if (appEl) appEl.classList.remove("is-print", "is-map");
   // Cleanup défensif : si l'utilisateur navigue (back button) avec un overlay/sheet
   // ouvert, retirer ces zombies du DOM avant de re-render.
-  document.querySelectorAll(".sheet-backdrop, .day-sheet, .modal-backdrop, .modal, .search-overlay").forEach(e => e.remove());
+  document.querySelectorAll(".sheet-backdrop, .sheet, .modal-backdrop, .modal, .search-overlay").forEach(e => e.remove());
   const r = getRoute();
   if (r.edit) renderEdit();
   else if (r.print) renderPrint();
@@ -2724,7 +2703,7 @@ function renderPrintMonthPage(month, isLast) {
   for (const u of DATA.users) {
     const avatarNode = u.photo
       ? el("img", { class: "p-avatar", src: u.photo, alt: u.nom })
-      : el("div", { class: `p-avatar-fallback r-${u.ramp}` }, u.initials || u.nom[0]);
+      : el("div", { class: `p-avatar-fallback r-${u.ramp}` }, u.initials || (u.nom || "?")[0]);
     headRow.appendChild(el("th", { class: "p-th p-th-user" },
       avatarNode,
       el("div", { class: "p-th-name" }, u.nom)
@@ -2932,7 +2911,7 @@ function renderProgramme(userId) {
   }, iconSpan("back"), "Famille"));
   const sw = el("div", { class: "user-switch" });
   for (const u of DATA.users) {
-    const inner = u.photo ? el("img", { src: u.photo, alt: u.nom }) : (u.initials || u.nom[0]);
+    const inner = u.photo ? el("img", { src: u.photo, alt: u.nom }) : (u.initials || (u.nom || "?")[0]);
     sw.appendChild(el("a", {
       class: `avatar r-${u.ramp}` + (u.photo ? " has-photo" : "") + (u.id === userId ? " is-current" : ""),
       href: `?user=${u.id}`,
@@ -2949,6 +2928,7 @@ function renderProgramme(userId) {
 
   if (items.length === 0) {
     app.appendChild(el("div", { class: "empty-state" }, `Rien de planifié pour ${user.nom} cet été.`));
+    addSearchFab();
     return;
   }
 
@@ -3292,7 +3272,7 @@ function buildExpand(container, item, userId) {
     for (const doc of o.docs) {
       const rawUrl = doc.url || `docs/${doc.file}`;
       const label = doc.label || doc.file;
-      // Helper resolveDocUrl gère : jsdelivr CDN + cache-busting via ?v=hash
+      // Helper resolveDocUrl : docs → GitHub Pages (cross-origin), avatars → Netlify, + cache-busting ?v=hash
       const url = resolveDocUrl(rawUrl);
       const pill = el("a", {
         class: "doc-pill",
@@ -3761,7 +3741,7 @@ function openCellEditor(rowIdx, userId) {
   modal.appendChild(el("div", { class: "modal-title" }, "Modifier la cellule"));
   // Sub-title plus visible : avatar + user + date
   const sub = el("div", { class: "modal-sub", style: { display: "flex", alignItems: "center", gap: "8px" } });
-  const subAvInner = user.photo ? el("img", { src: user.photo, alt: user.nom }) : (user.initials || user.nom[0]);
+  const subAvInner = user.photo ? el("img", { src: user.photo, alt: user.nom }) : (user.initials || (user.nom || "?")[0]);
   sub.appendChild(el("span", { class: `avatar r-${user.ramp}` + (user.photo ? " has-photo" : ""), style: { width: "22px", height: "22px", fontSize: "10px", fontWeight: "600" } }, subAvInner));
   sub.appendChild(el("span", { style: { fontWeight: "500", color: "var(--text)" } }, user.nom));
   sub.appendChild(el("span", null, "·"));
