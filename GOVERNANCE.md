@@ -35,9 +35,9 @@ JAL est le seul à pouvoir modifier et déployer (accès GitHub + machine locale
 
 | Composant | Service | Détail |
 |---|---|---|
-| Code source (repo) | GitHub | `jal-hub/jal-summer-2026` (**public**) |
+| Code source (repo) | GitHub | `jal-hub/Summer-26` (**public**) |
 | Hébergement app | Netlify | Site `lecointre-summer-2026`, déploie automatiquement depuis la branche `main` du repo GitHub |
-| Hébergement PDFs (billets) | GitHub Pages | `jal-hub.github.io/jal-summer-2026/docs/*` (cross-origin volontaire, voir Codebook) |
+| Hébergement PDFs (billets) | GitHub Pages | `jal-hub.github.io/Summer-26/docs/*` (cross-origin volontaire, voir Codebook) |
 | Hébergement avatars | Netlify | `/avatars/*` (same-origin) |
 | Librairies externes | jsDelivr CDN | xlsx, jsPDF, html2canvas, Twemoji, Leaflet |
 | API météo | Open-Meteo | Gratuite, sans clé |
@@ -76,7 +76,7 @@ JAL est le seul à pouvoir modifier et déployer (accès GitHub + machine locale
 |---|---|---|
 | Source de vérité (XLSX) | `pCloud/.../Summer Plan/Summer 2026.xlsx` | Manuelle (export depuis le dashboard) |
 | Code + données (index.html) | Git history (GitHub) | À chaque push |
-| Backups horodatés HTML | `~/Developer/jal-summer-2026/.backups/` (10 derniers) | Auto à chaque `publish.command` |
+| Backups horodatés HTML | `~/Developer/Summer-26/.backups/` (10 derniers) | Auto à chaque `publish.command` |
 | Dossier projet complet | pCloud (synchro) | Continue |
 
 ---

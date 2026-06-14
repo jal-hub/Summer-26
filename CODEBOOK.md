@@ -13,7 +13,7 @@ Une **SPA mono-fichier** (`index.html`, ~190 KB, HTML + CSS + JS inline, zéro f
 
 ## 2. Inventaire des fichiers
 
-Repo `jal-hub/jal-summer-2026` :
+Repo `jal-hub/Summer-26` :
 
 | Fichier | Rôle |
 |---|---|
