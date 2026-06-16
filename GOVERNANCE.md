@@ -13,7 +13,7 @@ _Dernière mise à jour : 2026-06-11_
 
 **Période couverte** : 20 juin → 24 août 2026.
 
-**URL de production** : https://lecointre-summer-2026.netlify.app
+**URL de production** : https://lecointre-summer-2026.netlify.app — **protégée par mot de passe** (Netlify Pro, site-wide).
 
 **Statut** : En production, utilisée par la famille. Considérée terminée (juin 2026), en phase de feedback/usage réel.
 
@@ -50,7 +50,8 @@ JAL est le seul à pouvoir modifier et déployer (accès GitHub + machine locale
 ## 4. Accès & comptes
 
 - **GitHub** : compte `jal-hub` (JAL). Le repo doit rester **public** pour que GitHub Pages serve gratuitement les PDFs.
-- **Netlify** : compte JAL, site connecté au repo GitHub (auto-deploy sur push `main`).
+- **Netlify** : compte JAL (**Pro**), site connecté au repo GitHub (auto-deploy sur push `main`).
+- **Mot de passe d'accès** (activé juin 2026) : protection par mot de passe site-wide Netlify (Site configuration → Access & security → Visitor access → Password protection). Un seul mot de passe partagé avec la famille + grands-parents. À redonner aux nouveaux utilisateurs.
 - **Authentification git locale** : token/SSH configuré sur la machine de JAL pour pousser sans mot de passe.
 
 > ⚠️ Si le `git push` demande un mot de passe ou échoue en auth, le token GitHub (PAT) a peut-être expiré — le régénérer dans GitHub > Settings > Developer settings.
@@ -83,12 +84,11 @@ JAL est le seul à pouvoir modifier et déployer (accès GitHub + machine locale
 
 ## 7. Données & confidentialité
 
-⚠️ **Point d'attention important** : le repo GitHub est **public**, donc les PDFs (billets d'avion, e-tickets) sont **accessibles publiquement** par toute personne connaissant l'URL. Ces documents contiennent :
-- Noms complets des membres de la famille
-- Numéros de réservation (booking references)
-- Numéros de billets et de fidélité (Emirates Skywards)
+**L'app est protégée par mot de passe** (Netlify Pro, site-wide) depuis juin 2026 → un visiteur sans le mot de passe ne peut pas accéder à l'app.
 
-**Décision JAL (juin 2026)** : acceptable pour un usage familial — les URLs ne sont pas devinables facilement (sécurité par obscurité), et `robots.txt` interdit l'indexation. Mais ce n'est pas une protection réelle.
+⚠️ **Gap résiduel** : la protection Netlify couvre l'app (index.html + avatars). Mais les **PDFs sont sur GitHub Pages** (autre domaine, non protégé) et le **repo GitHub est public**. Donc les billets restent techniquement accessibles par leur URL directe `jal-hub.github.io/Summer-26/docs/...`, et les données via le repo. Ces documents contiennent : noms complets, références de réservation, numéros Skywards.
+
+**Décision JAL (juin 2026)** : mot de passe sur l'app = porte d'entrée fermée, suffisant pour l'usage familial. Les URLs PDF ne sont jamais affichées publiquement et `robots.txt` interdit l'indexation. Pour une confidentialité totale des billets, il faudrait repo privé + PDFs derrière auth (gros chantier, casse le viewer PDF iOS) — non retenu.
 
 **Si confidentialité requise un jour** : il faudrait passer le repo en privé + un autre mode d'hébergement des PDFs (ce qui casserait le rendu PDF natif sur iOS PWA — voir Codebook, section CDN).
 
