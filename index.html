@@ -3529,6 +3529,23 @@ async function writeBlobToHandle(handle, blob) {
   const writable = await handle.createWritable();
   await writable.write(blob);
   await writable.close();
+  // VÉRIFICATION anti-fichier-vide : on relit le fichier après écriture.
+  // createWritable() tronque le fichier à 0 au début ; si quelque chose a foiré
+  // entre-temps, le fichier resterait vide. On le détecte ici pour pouvoir
+  // basculer sur le téléchargement de secours (les données ne sont jamais perdues).
+  const check = await handle.getFile();
+  if (check.size < 1000) {
+    throw new Error(`Écriture vérifiée KO : fichier ${check.size} octets`);
+  }
+}
+
+// Télécharge l'HTML complet (filet de sécurité si l'écriture directe échoue).
+function downloadHtmlFallback(html) {
+  const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = "index.html";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
 async function saveDashboardHtml() {
@@ -3574,17 +3591,28 @@ async function saveDashboardHtml() {
     if (newHtml.length < 1000) throw new Error(`HTML résultant trop petit (${newHtml.length})`);
     const blob = new Blob([newHtml], { type: "text/html" });
     if (handle) {
-      await writeBlobToHandle(handle, blob);
-      markSaved();
-      showToast(`Sauvé · ${(newHtml.length/1024).toFixed(1)} KB`);
-      return true;
+      try {
+        await writeBlobToHandle(handle, blob);   // écrit + vérifie (relecture)
+        markSaved();
+        showToast(`Sauvé · ${(newHtml.length/1024).toFixed(1)} KB`);
+        return true;
+      } catch (writeErr) {
+        console.error("[save] écriture directe échouée", writeErr);
+        // Handle périmé (renommage) → on jette + on redemande au prochain clic.
+        if (writeErr && (writeErr.name === "NotFoundError" || /could not be found/i.test(writeErr.message || ""))) {
+          HTML_HANDLE = null;
+          idbPut(IDB_KEY_HTML, null).catch(() => {});
+          showToast("Fichier introuvable (dossier renommé ?). Re-clique sur Sauver pour re-sélectionner index.html.", true);
+          return false;
+        }
+        // Tout autre échec d'écriture → on NE PERD RIEN : téléchargement de secours.
+        downloadHtmlFallback(newHtml);
+        showToast("Écriture directe KO → fichier téléchargé. Remplace index.html par ce fichier, puis publie.", true);
+        return false;
+      }
     }
-    // Fallback download
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = "index.html";
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    // Pas de handle (navigateur sans File System Access) → téléchargement direct.
+    downloadHtmlFallback(newHtml);
     markSaved();
     showToast(`Téléchargé · à déplacer vers index.html`);
     return true;
