@@ -2994,8 +2994,9 @@ function renderProgramme(userId) {
     const startIso = shiftDate(lastIso, 1);
     app.appendChild(el("div", { class: "context-band is-end" },
       el("span", null,
-        el("span", { class: "context-band-label", html: twemojify(dubaiLabel + " ") }),
-        `à partir du ${fmtDateSingle(startIso)}`)
+        el("span", { class: "context-band-label" }, "À Dubai "),
+        `à partir du ${fmtDateSingle(startIso)}`,
+        el("span", { html: twemojify(camelSuffix) }))
     ));
   }
 }
