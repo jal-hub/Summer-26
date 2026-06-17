@@ -2586,7 +2586,7 @@ function getTrajetEmoji(type) { return TRAJET_EMOJI[type] || "🚗"; }
 // On sert depuis jsdelivr (fork maintenu jdecked/twemoji). On remplace UNIQUEMENT
 // notre set connu d'émojis (robuste, pas de regex émoji générale fragile).
 const TWEMOJI_BASE = "https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/";
-const APP_EMOJIS = ["🩰","✨","🛎️","🏰","🦁","💼","💒","🔨","🏖️","☀️","🏔️","✈️","🚆","🚗","🎉","🏝️","🏠"];
+const APP_EMOJIS = ["🩰","✨","🛎️","🏰","🦁","💼","💒","🔨","🏖️","☀️","🏔️","✈️","🚆","🚗","🎉","🏝️","🏠","🐪"];
 function _emojiToTwemojiCp(emoji) {
   return Array.from(emoji)
     .map(c => c.codePointAt(0).toString(16))
@@ -2935,13 +2935,15 @@ function renderProgramme(userId) {
   // Bande "À Dubai jusqu'au..." AVANT le banner
   const firstIso = items[0].date;
   const lastIso = items[items.length - 1].dateEnd;
+  // Suffixe chameau en fin de bande : 🐪 pour tout le monde, 🐪 (Bob) pour Sixtine.
+  const camelSuffix = userId === "sixtine" ? " 🐪 (Bob)" : " 🐪";
   if (firstIso > DATA.meta.dateStart) {
     const endIso = shiftDate(firstIso, -1);
     app.appendChild(el("div", { class: "context-band" },
-      iconSpan("home"),
       el("span", null,
         el("span", { class: "context-band-label" }, "À Dubai "),
-        `jusqu'au ${fmtDateSingle(endIso)}`)
+        `jusqu'au ${fmtDateSingle(endIso)}`,
+        el("span", { html: twemojify(camelSuffix) }))
     ));
   }
 
@@ -2991,9 +2993,8 @@ function renderProgramme(userId) {
   if (lastIso < DATA.meta.dateEnd) {
     const startIso = shiftDate(lastIso, 1);
     app.appendChild(el("div", { class: "context-band is-end" },
-      iconSpan("home"),
       el("span", null,
-        el("span", { class: "context-band-label" }, "À Dubai "),
+        el("span", { class: "context-band-label", html: twemojify(dubaiLabel + " ") }),
         `à partir du ${fmtDateSingle(startIso)}`)
     ));
   }
