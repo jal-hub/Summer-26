@@ -1,7 +1,7 @@
 # Governance — Summer 2026 (Famille Lecointre)
 
 _Document de gouvernance de l'application de planning familial._
-_Dernière mise à jour : 2026-06-11_
+_Dernière mise à jour : 2026-06-17_
 
 ---
 
@@ -104,6 +104,8 @@ JAL est le seul à pouvoir modifier et déployer (accès GitHub + machine locale
 | iOS PWA capricieux (print) | Impression mobile imparfaite | PDF généré côté client (jsPDF) ; impression conseillée depuis desktop |
 | Open-Meteo / OSM gratuits | Pas de SLA | Non critique (météo/carte = confort) |
 | Single-file ~190KB | Difficile à maintenir à plusieurs | Documenté dans le Codebook |
+| Sauvegarde éditeur vide `index.html` (bug FSA) | Perte du fichier local | Sauvegarde blindée (relecture + download de secours) ; garde-fou publish ; backups `.backups/` + Git (voir Codebook §11 Récupération) |
+| Renommage repo/dossier | PDFs + sauvegarde cassés | Mettre à jour `DOCS_PAGES_BASE`, `REPO_DIR`, `build_v22.py` ; la sauvegarde se self-heal (re-sélection du fichier) |
 
 ---
 

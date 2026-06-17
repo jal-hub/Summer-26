@@ -1,7 +1,7 @@
 # Codebook — Summer 2026 (Famille Lecointre)
 
 _Documentation technique de l'application._
-_Dernière mise à jour : 2026-06-11_
+_Dernière mise à jour : 2026-06-17_
 
 ---
 
@@ -100,8 +100,11 @@ Dispatch dans `render()`. Une classe est posée sur `<body>` selon la vue (`map-
 - `buildShareTextForItem()` / `shareItem()` / `sharePdf()` — partage WhatsApp/AirDrop.
 - `geocode()` / `fetchForecast()` / `renderWeatherBlock()` — météo Open-Meteo (cache localStorage).
 
-**Sauvegarde**
-- `saveDashboardHtml()` — écrit `index.html` via File System Access API (fallback download). Regex `let DATA = {...};` remplacée via **fonction** (pas string, pour éviter l'interprétation des `$`).
+**Sauvegarde** (blindée juin 2026)
+- `saveDashboardHtml()` — écrit `index.html` via File System Access API. Regex `let DATA = {...};` remplacée via **fonction** (pas string, pour éviter l'interprétation des `$`).
+  - **Self-heal handle périmé** : si le handle mémorisé pointe vers un fichier disparu (dossier renommé → `NotFoundError`), il est jeté et le sélecteur de fichier est re-proposé au clic suivant.
+  - **Anti-fichier-vide** : `writeBlobToHandle()` **relit** le fichier après écriture et lève une erreur s'il fait < 1000 octets (createWritable() tronque à 0 d'abord ; un échec laisserait le fichier vide).
+  - **Filet de sécurité** : si l'écriture directe échoue, `downloadHtmlFallback()` télécharge le HTML complet → aucune perte de données possible.
 - `exportXlsx()` — export du backup Excel.
 
 ---
@@ -181,6 +184,20 @@ index.html (DATA existant) ─┘
 - **Collision de `const`** : dans un fichier mono, redéclarer un nom existant (ex. `DOW_LONG_FR`) plante TOUT le JS → écran blanc. **Toujours valider** : `node -e "new Function(code)"` avant de pousser.
 - **Émoji hors `APP_EMOJIS`** : reste en rendu natif (pas twemojifié) = incohérence visuelle.
 - **Dark mode supprimé** : mode clair forcé (`color-scheme: light`), dégradé estival sur toute l'app.
+- **Renommage repo/dossier casse 2 choses** : (1) GitHub Pages → mettre à jour `DOCS_PAGES_BASE` ; (2) le file handle FSA mémorisé devient périmé (`NotFoundError`) → la sauvegarde se self-heal (re-prompt picker). Aussi mettre à jour `REPO_DIR` dans `publish.command` et `build_v22.py`.
+- **`index.html` vidé à 0 octet** : possible si l'écriture FSA échoue après `createWritable()` (qui tronque). Mitigé par la sauvegarde blindée (relecture + download fallback). Si ça arrive quand même → voir §11 Récupération.
+
+---
+
+## 11. Récupération (index.html cassé / vidé)
+
+Si `index.html` est vide ou corrompu, dans l'ordre de préférence :
+1. **Backups horodatés** : `.backups/index_*.html` (10 derniers, créés par chaque `publish.command`). Copier le plus récent valide : `cp .backups/index_AAAA-MM-JJ_HH-MM-SS.html index.html`.
+2. **Git** : `git checkout index.html` (revient au dernier commit poussé) ou `git log` + `git checkout <sha> -- index.html`.
+3. **Rebuild** : si `index.html` a encore un `DATA` valide quelque part, `build_v22.py` régénère depuis le template + ce DATA.
+4. Toujours valider après : `node -e "new Function(<le JS inline>)"` puis vérifier la taille (> 150 KB).
+
+> Garde-fou : `publish.command` refuse de pousser si `index.html` < 1000 octets — la version en ligne n'est donc jamais écrasée par un fichier vide.
 
 ---
 
