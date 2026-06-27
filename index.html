@@ -3175,30 +3175,46 @@ function normalizeFr24Number(vol) {
   return compact.toLowerCase();
 }
 
-function addTrajetToCalendar(item, userId) {
+async function addTrajetToCalendar(item, userId) {
   const ics = buildTrajetIcs(item, userId);
   const fnameBase = (item.obj.vol || item.obj.titre || "trajet").replace(/[^A-Za-z0-9]+/g, "_");
   const filename = `${item.date}_${fnameBase}.ics`;
-  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
 
-  // iOS Safari : navigation directe vers blob text/calendar → Safari détecte
-  // le mime type et propose nativement "Ajouter à Calendar" en bannière haute.
-  // BEAUCOUP plus propre que Web Share qui ne propose pas Calendar.
-  // Desktop : navigation déclenche le téléchargement → ouverture par Calendar.
-  const a = document.createElement("a");
-  a.href = url;
-  a.target = "_blank";
-  a.rel = "noopener";
-  // download attribute déclencherait un download au lieu d'une ouverture sur desktop ;
-  // sur iOS Safari c'est ignoré et le mime text/calendar prend la main de toute façon.
-  a.download = filename;
-  a.style.display = "none";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  // 1) iOS / mobile (et macOS Safari) : Web Share API avec un VRAI fichier .ics →
+  //    la feuille de partage native affiche l'événement et propose "Ajouter à Calendrier".
+  //    C'est le seul chemin fiable en PWA standalone : le téléchargement blob échoue
+  //    avec "Safari cannot download this file". On garde la création du File + le
+  //    navigator.share SANS await intermédiaire pour préserver l'user-activation.
+  try {
+    if (typeof File === "function" && navigator.canShare) {
+      const file = new File([ics], filename, { type: "text/calendar" });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: item.obj.titre || "Trajet" });
+        return;
+      }
+    }
+  } catch (err) {
+    if (err && err.name === "AbortError") return; // l'utilisateur a annulé : on s'arrête là
+    // sinon on tente les fallbacks ci-dessous
+  }
 
-  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  // 2) Desktop sans Web Share fichiers : téléchargement classique du .ics → ouvre Calendrier.
+  try {
+    const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    return;
+  } catch (err) {
+    // 3) Dernier recours : navigation vers une data URI text/calendar.
+    window.location.href = "data:text/calendar;charset=utf-8," + encodeURIComponent(ics);
+  }
 }
 
 function buildExpand(container, item, userId) {
